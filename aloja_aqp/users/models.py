@@ -18,12 +18,15 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    ROLE_CHOICES = [
-        ('student', 'Student'),
-        ('owner', 'Owner'),
-        ('admin', 'Admin'),
-    ]
+    # ROLE_CHOICES = [
+    #     ('student', 'Student'),
+    #     ('owner', 'Owner'),
+    #     ('admin', 'Admin'),
+    # ]
 
+    is_student = models.BooleanField(default=True)
+    is_owner = models.BooleanField(default=False)
+    
     email = models.EmailField(unique=True)
     google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     first_name = models.CharField(max_length=50, blank=True)
@@ -32,7 +35,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    #role = models.CharField(max_length=10, choices=ROLE_CHOICES)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
