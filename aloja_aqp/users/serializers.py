@@ -4,9 +4,21 @@ from .models import OwnerProfile, User, StudentProfile, UserStatus
 from universities.serializers import StudentUniversitySerializer
 from universities.models import StudentUniversity
 from django.contrib.auth.models import Group
+from django.contrib.auth import authenticate
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True)
+
+    def validate(self, attrs):
+        user = authenticate(email=attrs['email'], password=attrs['password'])
+        if not user:
+            raise serializers.ValidationError("Credenciales inválidas")
+        attrs['user'] = user
+        return attrs
+    
+class StudentRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6, style={'input_type': 'password'})
     universities = serializers.ListField(
         child=serializers.IntegerField(), write_only=True, required=False
@@ -82,3 +94,36 @@ def create(self, validated_data):
     )
 
     return user
+
+
+"""
+    Respuestas 
+"""
+from rest_framework import serializers
+from .models import User, StudentProfile, OwnerProfile
+
+class StudentProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentProfile
+        fields = ['phone_number', 'status_id']
+
+class OwnerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OwnerProfile
+        fields = ['phone_number', 'dni', 'contact_address', 'verified', 'status_id']
+
+class UserResponseSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    roles = serializers.SerializerMethodField()
+    student_profile = StudentProfileSerializer(read_only=True)
+    owner_profile = OwnerProfileSerializer(read_only=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'full_name', 'roles', 'student_profile', 'owner_profile']
+
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}"
+
+    def get_roles(self, obj):
+        return [group.name for group in obj.groups.all()]
