@@ -1,5 +1,4 @@
 from django.db import models
-from users.models import StudentProfile
 
 class University(models.Model):
     name = models.CharField(max_length=255)
@@ -16,13 +15,14 @@ class University(models.Model):
 
 
 class StudentUniversity(models.Model):
-    student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
+    student = models.ForeignKey('users.StudentProfile', on_delete=models.CASCADE)
     university = models.ForeignKey(University, on_delete=models.CASCADE)
-    start_date = models.DateField(null=True, blank=True)
-    end_date = models.DateField(null=True, blank=True)
+    #start_date = models.DateField(null=True, blank=True)
+    #end_date = models.DateField(null=True, blank=True)
 
     class Meta:
         unique_together = ("student", "university")
 
     def __str__(self):
         return f"{self.student.user.email} - {self.university.abbreviation}"
+    

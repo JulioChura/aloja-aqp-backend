@@ -1,6 +1,7 @@
 from django.db import models
 from users.models import OwnerProfile, StudentProfile
 from universities.models import University
+from points.models import PointOfInterest
 
 class Accommodation(models.Model):
     owner = models.ForeignKey(OwnerProfile, on_delete=models.CASCADE, related_name="accommodations")
@@ -49,6 +50,38 @@ class AccommodationService(models.Model):
     def __str__(self):
         return f"{self.service.name} in {self.accommodation.title}"
 
+class UniversityDistance(models.Model):
+    accommodation = models.ForeignKey(Accommodation, on_delete=models.CASCADE)
+    university = models.ForeignKey(University, on_delete=models.CASCADE)
+    distance_km = models.DecimalField(max_digits=6, decimal_places=2)
+    walk_time_minutes = models.IntegerField(null=True, blank=True)
+    bus_time_minutes = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("accommodation", "university")
+
+    def __str__(self):
+        return f"{self.accommodation.title} - {self.university.abbreviation}"
+
+
+class AccommodationNearbyPlace(models.Model):
+    accommodation = models.ForeignKey(
+        'Accommodation', on_delete=models.CASCADE, related_name='nearby_places'
+    )
+    point_of_interest = models.ForeignKey(
+        PointOfInterest, on_delete=models.CASCADE, related_name='near_accommodations'
+    )
+    distance_km = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    walking_time_min = models.IntegerField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ('accommodation', 'point_of_interest')
+
+    def __str__(self):
+        return f"{self.accommodation.title} - {self.point_of_interest.name}"
+
+
+
 class Review(models.Model):
     accommodation = models.ForeignKey(Accommodation, on_delete=models.CASCADE, related_name="reviews")
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
@@ -73,16 +106,3 @@ class Favorite(models.Model):
 
     def __str__(self):
         return f"{self.student.user.email} - {self.accommodation.title}"
-
-class UniversityDistance(models.Model):
-    accommodation = models.ForeignKey(Accommodation, on_delete=models.CASCADE)
-    university = models.ForeignKey(University, on_delete=models.CASCADE)
-    distance_km = models.DecimalField(max_digits=6, decimal_places=2)
-    walk_time_minutes = models.IntegerField(null=True, blank=True)
-    bus_time_minutes = models.IntegerField(null=True, blank=True)
-
-    class Meta:
-        unique_together = ("accommodation", "university")
-
-    def __str__(self):
-        return f"{self.accommodation.title} - {self.university.abbreviation}"

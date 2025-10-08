@@ -4,6 +4,24 @@ from django.utils import timezone
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from universities.models import University
+
+from django.db import models
+
+class UserStatus(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    description = models.CharField(max_length=255, blank=True)
+
+    def __str__(self):
+        return self.name
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -21,15 +39,7 @@ class CustomUserManager(BaseUserManager):
         return self.create_user(email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    # ROLE_CHOICES = [
-    #     ('student', 'Student'),
-    #     ('owner', 'Owner'),
-    #     ('admin', 'Admin'),
-    # ]
 
-    is_student = models.BooleanField(default=True)
-    is_owner = models.BooleanField(default=False)
-    
     email = models.EmailField(unique=True)
     google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     first_name = models.CharField(max_length=50, blank=True)
@@ -38,7 +48,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
-    #role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    roles = models.ManyToManyField('Role', related_name='users', blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -51,6 +61,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    def has_role(self, role_name):
+        """Verifica si el usuario tiene un rol específico"""
+        return self.roles.filter(name=role_name).exists()
 
 class OwnerProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='owner_profile')
@@ -61,16 +74,17 @@ class OwnerProfile(models.Model):
     verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    status = models.ForeignKey('UserStatus', on_delete=models.SET_NULL, null=True, default=None)
 
     def __str__(self):
-        return f"OwnerProfile: {self.user.email}"
+        return f"{self.user.email} - {self.status}"
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
     phone_number = models.CharField(max_length=20, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    university = models.CharField(max_length=100, blank=True)
-    
+    status = models.ForeignKey('UserStatus', on_delete=models.SET_NULL, null=True, default=None)
+
     def __str__(self):
-        return f"StudentProfile: {self.user.email}"
+        return f"{self.user.email} - {self.status}"
