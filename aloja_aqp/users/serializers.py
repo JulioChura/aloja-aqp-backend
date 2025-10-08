@@ -96,6 +96,37 @@ def create(self, validated_data):
     return user
 
 
+class OwnerRegistrationSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    dni = serializers.CharField(required=True)
+    contact_address = serializers.CharField(required=False, allow_blank=True)
+
+    def create(self, validated_data):
+        user = self.context['request'].user  # usuario logueado
+
+        # evitar crear owner si ya existe
+        if hasattr(user, 'owner_profile'):
+            raise serializers.ValidationError("El usuario ya tiene perfil de owner.")
+
+        # asignar rol owner
+        owner_group, _ = Group.objects.get_or_create(name='owner')
+        user.groups.add(owner_group)
+
+        active_status, _ = UserStatus.objects.get_or_create(name='active')
+
+        # crear perfil owner
+        owner_profile = OwnerProfile.objects.create(
+            user=user,
+            phone_number=validated_data.get('phone_number', ''),
+            dni=validated_data['dni'],
+            contact_address=validated_data.get('contact_address', ''),
+            status=active_status
+        )
+
+        return owner_profile
+    
+    
+
 """
     Respuestas 
 """
