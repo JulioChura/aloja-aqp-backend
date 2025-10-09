@@ -7,8 +7,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, status
 from rest_framework.response import Response
 from .models import User, OwnerProfile, UserStatus
-from .serializers import UserResponseSerializer, OwnerRegistrationSerializer
+from .serializers import UserResponseSerializer, OwnerRegistrationSerializer,  UserUpdateSerializer, AvatarUpdateSerializer
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
 
 class UserLoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer  
@@ -63,3 +64,24 @@ class OwnerRegistrationView(generics.CreateAPIView):
             "message": "Perfil de propietario creado exitosamente",
             "user": user_data
         }, status=status.HTTP_201_CREATED)
+    
+    
+# actualizar informacion
+class UpdateUserInfoView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = UserUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class UpdateUserAvatarView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = AvatarUpdateSerializer(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"avatar": serializer.data['avatar']}, status=status.HTTP_200_OK)

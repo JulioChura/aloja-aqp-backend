@@ -159,3 +159,37 @@ class UserResponseSerializer(serializers.ModelSerializer):
 
     def get_roles(self, obj):
         return [group.name for group in obj.groups.all()]
+
+
+class UserUpdateSerializer(serializers.ModelSerializer):
+    student_profile = StudentProfileSerializer(required=False)
+    owner_profile = OwnerProfileSerializer(required=False)
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'avatar', 'student_profile', 'owner_profile']
+
+    def update(self, instance, validated_data):
+        instance.first_name = validated_data.get('first_name', instance.first_name)
+        instance.last_name = validated_data.get('last_name', instance.last_name)
+        instance.avatar = validated_data.get('avatar', instance.avatar)
+        instance.save()
+
+        student_data = validated_data.get('student_profile')
+        if student_data and hasattr(instance, 'student_profile'):
+            for attr, value in student_data.items():
+                setattr(instance.student_profile, attr, value)
+            instance.student_profile.save()
+
+        owner_data = validated_data.get('owner_profile')
+        if owner_data and hasattr(instance, 'owner_profile'):
+            for attr, value in owner_data.items():
+                setattr(instance.owner_profile, attr, value)
+            instance.owner_profile.save()
+
+        return instance
+
+class AvatarUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['avatar']
