@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, status
 from rest_framework.response import Response
 from .models import User, OwnerProfile, UserStatus
-from .serializers import UserResponseSerializer, OwnerRegistrationSerializer,  UserUpdateSerializer
+from .serializers import UserResponseSerializer, OwnerRegistrationSerializer,  UserUpdateSerializer, ChangePasswordSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -77,6 +77,15 @@ class LogoutView(APIView):
             return Response({"message": "Logout successful"}, status=status.HTTP_205_RESET_CONTENT)
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"message": "Contraseña actualizada correctamente"}, status=status.HTTP_200_OK)
     
 # actualizar informacion
 class UpdateUserInfoView(APIView):

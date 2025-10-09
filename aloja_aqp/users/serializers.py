@@ -5,6 +5,7 @@ from universities.serializers import StudentUniversitySerializer
 from universities.models import StudentUniversity
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate
+from django.contrib.auth import password_validation
 
 
 class LoginSerializer(serializers.Serializer):
@@ -188,3 +189,24 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             instance.owner_profile.save()
 
         return instance
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Contraseña actual incorrecta")
+        return value
+
+    def validate_new_password(self, value):
+        password_validation.validate_password(value)
+        return value
+
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user
