@@ -11,6 +11,22 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from decouple import config
+
+import os
+
+os.environ['CLOUDINARY_CLOUD_NAME'] = config('CLOUDINARY_CLOUD_NAME')
+os.environ['CLOUDINARY_API_KEY'] = config('CLOUDINARY_API_KEY')
+os.environ['CLOUDINARY_API_SECRET'] = config('CLOUDINARY_API_SECRET')
+
+import cloudinary
+
+cloudinary.config(
+    cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.environ.get('CLOUDINARY_API_KEY'),
+    api_secret=os.environ.get('CLOUDINARY_API_SECRET'),
+)
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -44,7 +60,9 @@ INSTALLED_APPS = [
     'core',
     'rest_framework',    
     'rest_framework_simplejwt',
-    'points'
+    'points',
+    'cloudinary',
+    'cloudinary_storage',
 ]
 
 MIDDLEWARE = [
@@ -138,3 +156,6 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

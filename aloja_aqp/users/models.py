@@ -5,6 +5,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from universities.models import University
+from cloudinary.models import CloudinaryField
 
 from django.db import models
 
@@ -36,7 +37,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     google_id = models.CharField(max_length=255, unique=True, null=True, blank=True)
     first_name = models.CharField(max_length=50, blank=True)
     last_name = models.CharField(max_length=50, blank=True)
-    avatar_url = models.URLField(blank=True, null=True)
+    avatar = CloudinaryField('avatar', blank=True, null=True)
     date_joined = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
