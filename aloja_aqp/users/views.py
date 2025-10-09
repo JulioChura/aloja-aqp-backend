@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, status
 from rest_framework.response import Response
 from .models import User, OwnerProfile, UserStatus
-from .serializers import UserResponseSerializer, OwnerRegistrationSerializer,  UserUpdateSerializer, AvatarUpdateSerializer
+from .serializers import UserResponseSerializer, OwnerRegistrationSerializer,  UserUpdateSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 
@@ -65,6 +65,18 @@ class OwnerRegistrationView(generics.CreateAPIView):
             "user": user_data
         }, status=status.HTTP_201_CREATED)
     
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()  
+
+            return Response({"message": "Logout successful"}, status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
 # actualizar informacion
 class UpdateUserInfoView(APIView):
@@ -77,11 +89,3 @@ class UpdateUserInfoView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class UpdateUserAvatarView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def patch(self, request):
-        serializer = AvatarUpdateSerializer(request.user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"avatar": serializer.data['avatar']}, status=status.HTTP_200_OK)

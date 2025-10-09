@@ -188,8 +188,3 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             instance.owner_profile.save()
 
         return instance
-
-class AvatarUpdateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['avatar']
