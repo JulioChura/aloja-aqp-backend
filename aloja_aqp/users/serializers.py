@@ -102,6 +102,11 @@ class OwnerRegistrationSerializer(serializers.Serializer):
     dni = serializers.CharField(required=True)
     contact_address = serializers.CharField(required=False, allow_blank=True)
 
+    def validate_dni(self, value):
+        if OwnerProfile.objects.filter(dni=value).exists():
+            raise serializers.ValidationError("Este DNI ya está registrado.")
+        return value
+    
     def create(self, validated_data):
         user = self.context['request'].user  # usuario logueado
 
