@@ -13,6 +13,7 @@ from rest_framework.views import APIView
 from google.oauth2 import id_token
 from google.auth.transport import requests
 import os
+import cloudinary.uploader
 
 GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
 from django.views.decorators.csrf import csrf_exempt
@@ -41,7 +42,11 @@ class GoogleLoginAPIView(APIView):
                 user.google_id = idinfo['sub']
                 user.set_unusable_password()
                 if picture_url:
-                    user.avatar = picture_url
+                    try:
+                        upload_result = cloudinary.uploader.upload(picture_url)
+                        user.avatar = upload_result['public_id']
+                    except Exception as e:
+                        print("Error subiendo avatar desde Google:", e)
                 user.save()
 
                 student_group, _ = Group.objects.get_or_create(name='student')
