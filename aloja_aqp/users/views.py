@@ -6,10 +6,74 @@ from .serializers import LoginSerializer, StudentRegistrationSerializer, UserRes
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework import generics, status
 from rest_framework.response import Response
-from .models import User, OwnerProfile, UserStatus
+from .models import User, OwnerProfile, UserStatus, StudentProfile
 from .serializers import UserResponseSerializer, OwnerRegistrationSerializer,  UserUpdateSerializer, ChangePasswordSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from google.oauth2 import id_token
+from google.auth.transport import requests
+import os
+
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from rest_framework.views import APIView
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GoogleLoginAPIView(APIView):
+    def post(self, request):
+        token = request.data.get("id_token")
+        if not token:
+            return Response({'error': 'ID Token no proporcionado'}, status=400)
+        
+        try:
+            idinfo = id_token.verify_oauth2_token(token, requests.Request(), GOOGLE_CLIENT_ID)
+            email = idinfo['email']
+            first_name = idinfo.get('given_name', '')
+            last_name = idinfo.get('family_name', '')
+            picture_url = idinfo.get('picture', None)
+
+            user, created = User.objects.get_or_create(email=email)
+            
+            if created:
+                user.first_name = first_name
+                user.last_name = last_name
+                user.google_id = idinfo['sub']
+                user.set_unusable_password()
+                if picture_url:
+                    user.avatar = picture_url
+                user.save()
+
+                student_group, _ = Group.objects.get_or_create(name='student')
+                user.groups.add(student_group)
+
+                active_status, _ = UserStatus.objects.get_or_create(name='active')
+                StudentProfile.objects.create(
+                    user=user,
+                    phone_number='',
+                    status=active_status
+                )
+
+            user_data = UserResponseSerializer(user).data
+
+            refresh = RefreshToken.for_user(user)
+            tokens = {
+                'refresh': str(refresh),
+                'access': str(refresh.access_token)
+            }
+
+            return Response({
+                "user": user_data,
+                **tokens
+            }, status=status.HTTP_200_OK)
+
+        except ValueError as e:
+            return Response({'error': 'Token inválido', 'details': str(e)}, status=400)
+        except Exception as e:
+            # Captura cualquier otro error y lo imprime en consola
+            print("ERROR GoogleLoginAPIView:", e)
+            return Response({'error': str(e)}, status=500)
+
 
 class UserLoginView(generics.GenericAPIView):
     serializer_class = LoginSerializer  

@@ -1,6 +1,6 @@
 from django.urls import path
 from .views import UserRegistrationView
-from .views import UserLoginView, OwnerRegistrationView, UpdateUserInfoView, LogoutView
+from .views import UserLoginView, OwnerRegistrationView, UpdateUserInfoView, LogoutView, GoogleLoginAPIView
 
 urlpatterns = [
     path('login/', UserLoginView.as_view(), name='token_obtain_pair'),
@@ -8,4 +8,7 @@ urlpatterns = [
     path('register-owner/', OwnerRegistrationView.as_view(), name='owner-register'),
     path('update-profile/', UpdateUserInfoView.as_view(), name='update-profile'),
     path('logout/', LogoutView.as_view(), name='token_logout'), 
+    path('google-login/', GoogleLoginAPIView.as_view(), name='google-login'),
+
+    
 ]

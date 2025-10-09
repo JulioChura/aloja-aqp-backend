@@ -15,6 +15,7 @@ from decouple import config
 
 import os
 
+GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID')
 os.environ['CLOUDINARY_CLOUD_NAME'] = config('CLOUDINARY_CLOUD_NAME')
 os.environ['CLOUDINARY_API_KEY'] = config('CLOUDINARY_API_KEY')
 os.environ['CLOUDINARY_API_SECRET'] = config('CLOUDINARY_API_SECRET')
@@ -53,7 +54,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    
+    #apps y librerias
     'users',
     'accommodations',
     'universities',
@@ -64,14 +65,43 @@ INSTALLED_APPS = [
     'points',
     'cloudinary',
     'cloudinary_storage',
+    'corsheaders',
+    #all auth
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    
 ]
 
+SITE_ID = 1
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # login normal
+    'allauth.account.auth_backends.AuthenticationBackend',  # login allauth
+]
+
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'APP': {
+            'client_id': config('GOOGLE_CLIENT_ID'),
+            'secret': config('GOOGLE_CLIENT_SECRET'),
+            'key': ''
+        }
+    }
+}
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    'allauth.account.middleware.AccountMiddleware',
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -160,3 +190,14 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Allauth settings
+ACCOUNT_USER_MODEL_USERNAME_FIELD = None  # No usar username
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']
+ACCOUNT_LOGIN_METHODS = {'email'}
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # o 'mandatory' si se quiere verificar
+LOGIN_REDIRECT_URL = "/perfil/"  # Cambiar '/perfil/' por la ruta del dashboard o perfil
+# URL a la que se redirige después del logout
+LOGOUT_REDIRECT_URL = "/"
+
+CORS_ALLOW_ALL_ORIGINS = True
