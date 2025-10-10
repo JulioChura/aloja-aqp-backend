@@ -1,0 +1,25 @@
+[33mfdd7e00[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: reset: moving to HEAD~1
+[33mfc4b67e[m HEAD@{1}: commit: se añade valdiacion para la cuenta del anunciante
+[33mfdd7e00[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{2}: commit: ultimos cambios
+[33m150d33f[m HEAD@{3}: commit: subiendo requirements
+[33mc7f8ef7[m HEAD@{4}: commit: se suben las variables de entorno, pero vacío
+[33m8005395[m[33m ([m[1;31morigin/allauth[m[33m, [m[1;32mallauth[m[33m)[m HEAD@{5}: merge allauth: Fast-forward
+[33m99888fb[m HEAD@{6}: checkout: moving from allauth to main
+[33m8005395[m[33m ([m[1;31morigin/allauth[m[33m, [m[1;32mallauth[m[33m)[m HEAD@{7}: commit: Se termina de implementar el cambio de password
+[33m19bd708[m HEAD@{8}: commit: Se arregla el error de cargar la imagen
+[33md40d905[m HEAD@{9}: commit: se integra la autenticacion con google, pero no se puede recuperar la imagen
+[33m99888fb[m HEAD@{10}: checkout: moving from main to allauth
+[33m99888fb[m HEAD@{11}: commit: avance de cambio de contraseña
+[33m50ab7d8[m HEAD@{12}: commit: Se implementa logout
+[33m1a69efa[m HEAD@{13}: commit: Se permite actualizar la informacion del usuario
+[33m1ce2fd6[m HEAD@{14}: commit: Se configura cloudinary
+[33m61ef3e0[m HEAD@{15}: commit: se crea la ruta par a crear propietario
+[33m617cae7[m HEAD@{16}: commit: Se agrega data a la respuesta tras el inicio de sesion
+[33mfe69fa8[m HEAD@{17}: commit: Se borra la tabla rol para usar los grupos que django maneja por defecto
+[33me9078d2[m HEAD@{18}: commit: Se agrega la tabla que controla el tipo de inmueble
+[33m0b7e346[m HEAD@{19}: commit: Se agrega una tabla de estados
+[33m694efb7[m HEAD@{20}: commit: Se implementan los modelos
+[33m87ac595[m HEAD@{21}: commit: se pueden crear usuarios
+[33m040aafe[m HEAD@{22}: pull: Fast-forward
+[33mb8a8a96[m HEAD@{23}: commit: se personaliza la clase user
+[33me5871f1[m HEAD@{24}: clone: from https://github.com/JulioChura/aloja-aqp-backend.git
