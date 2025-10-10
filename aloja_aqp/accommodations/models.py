@@ -2,6 +2,7 @@ from django.db import models
 from users.models import OwnerProfile, StudentProfile
 from universities.models import University
 from points.models import PointOfInterest
+from cloudinary.models import CloudinaryField
 
 class AccommodationStatus(models.Model):
     name = models.CharField(max_length=50, unique=True) 
@@ -37,7 +38,7 @@ class Accommodation(models.Model):
 
 class AccommodationPhoto(models.Model):
     accommodation = models.ForeignKey(Accommodation, on_delete=models.CASCADE, related_name="photos")
-    image_url = models.URLField()
+    image = CloudinaryField('image')
     order_num = models.IntegerField(default=0)
     is_main = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
