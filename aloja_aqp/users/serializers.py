@@ -6,7 +6,7 @@ from universities.models import StudentUniversity
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate
 from django.contrib.auth import password_validation
-
+from .utils.api_reniec import verificar_dni, normalize_name
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -96,41 +96,60 @@ def create(self, validated_data):
 
     return user
 
-
 class OwnerRegistrationSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
     dni = serializers.CharField(required=True)
     contact_address = serializers.CharField(required=False, allow_blank=True)
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
 
     def validate_dni(self, value):
         if OwnerProfile.objects.filter(dni=value).exists():
             raise serializers.ValidationError("Este DNI ya está registrado.")
         return value
-    
-    def create(self, validated_data):
-        user = self.context['request'].user  # usuario logueado
 
-        # evitar crear owner si ya existe
+    def create(self, validated_data):
+        user = self.context['request'].user
+
         if hasattr(user, 'owner_profile'):
             raise serializers.ValidationError("El usuario ya tiene perfil de owner.")
 
-        # asignar rol owner
+        nombres_usuario = normalize_name(validated_data['first_name'] + " " + validated_data['last_name'])
+        print("Nombre ingresado por usuario (normalizado):", nombres_usuario)
+
+        dni_data = verificar_dni(validated_data['dni'])
+        print("Datos obtenidos de RENIEC:", dni_data)
+
+
+        if not dni_data:
+            raise serializers.ValidationError("DNI no encontrado en RENIEC.")
+
+        nombres_api = normalize_name(f"{dni_data['first_name']} {dni_data['last_name_1']} {dni_data['last_name_2']}".strip())
+        print("Nombre oficial RENIEC (normalizado):", nombres_api)
+        
+        if nombres_usuario != nombres_api:
+            raise serializers.ValidationError("Los nombres proporcionados no coinciden con RENIEC.")
+
+        # Crear perfil owner
+        user.first_name = dni_data['first_name']
+        user.last_name = f"{dni_data['last_name_1']} {dni_data['last_name_2']}".strip()
+        user.save()
+
         owner_group, _ = Group.objects.get_or_create(name='owner')
         user.groups.add(owner_group)
 
         active_status, _ = UserStatus.objects.get_or_create(name='active')
 
-        # crear perfil owner
         owner_profile = OwnerProfile.objects.create(
             user=user,
             phone_number=validated_data.get('phone_number', ''),
             dni=validated_data['dni'],
             contact_address=validated_data.get('contact_address', ''),
+            verified=True,
             status=active_status
         )
 
         return owner_profile
-    
     
 
 """

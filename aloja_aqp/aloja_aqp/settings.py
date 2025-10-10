@@ -200,4 +200,7 @@ LOGIN_REDIRECT_URL = "/perfil/"  # Cambiar '/perfil/' por la ruta del dashboard 
 # URL a la que se redirige después del logout
 LOGOUT_REDIRECT_URL = "/"
 
+
+API_KEY = config('DECOLECTA_API_KEY')
+
 CORS_ALLOW_ALL_ORIGINS = True
