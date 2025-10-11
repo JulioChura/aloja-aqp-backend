@@ -5,10 +5,10 @@ class IsOwnerOrReadOnly(permissions.BasePermission):
     Solo el propietario puede editar o eliminar su alojamiento.
     """
     def has_object_permission(self, request, view, obj):
-        print(obj)
         if request.method in permissions.SAFE_METHODS:
             return True
-        return hasattr(obj, 'owner_profile') and obj.owner.user == request.user
+        # Verifica que el usuario sea el owner del alojamiento
+        return hasattr(obj, 'owner') and obj.owner.user == request.user
 
 class IsStudentOrReadOnly(permissions.BasePermission):
     """

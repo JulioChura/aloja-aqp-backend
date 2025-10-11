@@ -6,7 +6,7 @@ from .models import (
     Review, Favorite
 )
 from users.models import OwnerProfile, StudentProfile
-from universities.models import University
+from universities.models import University, UniversityCampus
 from points.models import PointOfInterest
 
 #  SERIALIZERS DE DATOS DE REFERENCIA 
@@ -174,17 +174,94 @@ class AccommodationServiceBulkSerializer(serializers.Serializer):
         services_data = validated_data['services']
         created_services = []
         for service_data in services_data:
-            # Verifica si ya existe
+            try:
+                predefined_service = PredefinedService.objects.get(pk=service_data['service'])
+            except PredefinedService.DoesNotExist:
+                raise serializers.ValidationError(f"El servicio con id {service_data['service']} no existe.")
             exists = AccommodationService.objects.filter(
                 accommodation=accommodation,
-                service_id=service_data['service']
+                service=predefined_service
             ).exists()
             if not exists:
                 service_obj = AccommodationService.objects.create(
                     accommodation=accommodation,
-                    service_id=service_data['service'],
+                    service=predefined_service,
                     detail=service_data.get('detail', '')
                 )
                 created_services.append(service_obj)
         return created_services
+
+class DistanceBulkSerializer(serializers.Serializer):
+    campus = serializers.IntegerField()
+    distance_km = serializers.DecimalField(max_digits=6, decimal_places=2)
+    walk_time_minutes = serializers.IntegerField(required=False)
+    bus_time_minutes = serializers.IntegerField(required=False)
+
+class UniversityDistanceBulkSerializer(serializers.Serializer):
+    accommodation = serializers.IntegerField()
+    distances = DistanceBulkSerializer(many=True)
+
+    def create(self, validated_data):
+        accommodation_id = validated_data['accommodation']
+        try:
+            accommodation = Accommodation.objects.get(pk=accommodation_id)
+        except Accommodation.DoesNotExist:
+            raise serializers.ValidationError("El alojamiento no existe.")
+        distances_data = validated_data['distances']
+        created_distances = []
+        for dist_data in distances_data:
+            try:
+                campus = UniversityCampus.objects.get(pk=dist_data['campus'])
+            except UniversityCampus.DoesNotExist:
+                raise serializers.ValidationError(f"El campus con id {dist_data['campus']} no existe.")
+            exists = UniversityDistance.objects.filter(
+                accommodation=accommodation,
+                campus=campus
+            ).exists()
+            if not exists:
+                dist_obj = UniversityDistance.objects.create(
+                    accommodation=accommodation,
+                    campus=campus,
+                    distance_km=dist_data['distance_km'],
+                    walk_time_minutes=dist_data.get('walk_time_minutes'),
+                    bus_time_minutes=dist_data.get('bus_time_minutes')
+                )
+                created_distances.append(dist_obj)
+        return created_distances
+
+class NearbyPlaceBulkSerializer(serializers.Serializer):
+    point_of_interest = serializers.IntegerField()
+    distance_km = serializers.DecimalField(max_digits=6, decimal_places=2, required=False)
+    walking_time_min = serializers.IntegerField(required=False)
+
+class AccommodationNearbyPlaceBulkSerializer(serializers.Serializer):
+    accommodation = serializers.IntegerField()
+    places = NearbyPlaceBulkSerializer(many=True)
+
+    def create(self, validated_data):
+        accommodation_id = validated_data['accommodation']
+        try:
+            accommodation = Accommodation.objects.get(pk=accommodation_id)
+        except Accommodation.DoesNotExist:
+            raise serializers.ValidationError("El alojamiento no existe.")
+        places_data = validated_data['places']
+        created_places = []
+        for place_data in places_data:
+            try:
+                poi = PointOfInterest.objects.get(pk=place_data['point_of_interest'])
+            except PointOfInterest.DoesNotExist:
+                raise serializers.ValidationError(f"El punto de interés con id {place_data['point_of_interest']} no existe.")
+            exists = AccommodationNearbyPlace.objects.filter(
+                accommodation=accommodation,
+                point_of_interest=poi
+            ).exists()
+            if not exists:
+                place_obj = AccommodationNearbyPlace.objects.create(
+                    accommodation=accommodation,
+                    point_of_interest=poi,
+                    distance_km=place_data.get('distance_km'),
+                    walking_time_min=place_data.get('walking_time_min')
+                )
+                created_places.append(place_obj)
+        return created_places
 

@@ -6,6 +6,7 @@ from .permissions import IsOwnerOrReadOnly, IsStudentOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.decorators import action
 
 
 #  Datos de referencia 
@@ -32,27 +33,8 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         # Filtra solo los alojamientos con estado "published"
         return Accommodation.objects.filter(status__name__iexact="published").select_related('owner', 'accommodation_type')
-    
-class AccommodationViewSet(viewsets.ModelViewSet):
-    queryset = Accommodation.objects.all()
-    serializer_class = AccommodationSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+ 
 
-    def get_queryset(self):
-        user = self.request.user
-        if hasattr(user, 'owner_profile'):
-            # Propietario ve solo sus alojamientos
-            return Accommodation.objects.filter(owner=user.owner_profile)
-        return Accommodation.objects.all()  # Estudiantes ven todos
-
-    def perform_create(self, serializer):
-        user = self.request.user
-        if not hasattr(user, 'owner_profile'):
-            raise PermissionDenied("Solo propietarios pueden crear alojamientos")
-        serializer.save(owner=user.owner_profile)
-
-
-#  Fotos 
 class AccommodationPhotoViewSet(viewsets.ModelViewSet):
     queryset = AccommodationPhoto.objects.all()
     serializer_class = AccommodationPhotoSerializer
@@ -157,16 +139,27 @@ class AccommodationViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
 
     def get_serializer_class(self):
-        # Usar serializer básico solo para crear
         if self.action == 'create':
             return AccommodationBasicCreateSerializer
         return AccommodationSerializer
 
+    def get_queryset(self):
+        user = self.request.user
+        if hasattr(user, 'owner_profile'):
+            return Accommodation.objects.filter(owner=user.owner_profile)
+        return Accommodation.objects.all()
+
     def perform_create(self, serializer):
-        # Estado inicial "en proceso"
         status_obj = AccommodationStatus.objects.get(name="draft")
         serializer.save(owner=self.request.user.owner_profile, status=status_obj)
-        
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsOwnerOrReadOnly])
+    def publish(self, request, pk=None):
+        accommodation = self.get_object()
+        status_obj = AccommodationStatus.objects.get(name="published")
+        accommodation.status = status_obj
+        accommodation.save()
+        return Response({"detail": "Alojamiento publicado correctamente."}, status=status.HTTP_200_OK)
 
 class AccommodationPhotoBulkCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
@@ -186,5 +179,25 @@ class AccommodationServiceBulkCreateView(APIView):
         if serializer.is_valid():
             serializer.save()
             return Response({"detail": "Servicios guardados correctamente."}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UniversityDistanceBulkCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+
+    def post(self, request):
+        serializer = UniversityDistanceBulkSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Distancias guardadas correctamente."}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AccommodationNearbyPlaceBulkCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+
+    def post(self, request):
+        serializer = AccommodationNearbyPlaceBulkSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Lugares cercanos guardados correctamente."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

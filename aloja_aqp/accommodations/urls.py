@@ -19,5 +19,7 @@ router.register(r'public/accommodations', PublicAccommodationViewSet, basename='
 urlpatterns = [
     path('api/accommodation-services/bulk/', AccommodationServiceBulkCreateView.as_view(), name='accommodation-services-bulk'),
     path('api/accommodation-photos/bulk/', AccommodationPhotoBulkCreateView.as_view(), name='accommodation-photos-bulk'),
+    path('api/university-distances/bulk/', UniversityDistanceBulkCreateView.as_view(), name='university-distances-bulk'),
+    path('api/accommodation-nearby-places/bulk/', AccommodationNearbyPlaceBulkCreateView.as_view(), name='accommodation-nearby-places-bulk'),
     path('api/', include(router.urls)),
 ]
