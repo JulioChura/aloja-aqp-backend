@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ruta real - Leaflet + OSRM</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
+
+  <style>
+    html,body { height:100%; margin:0; }
+    #map { height:100vh; width:100%; }
+    .panel {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 1000;
+      background: rgba(255,255,255,0.95);
+      padding: 10px;
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      font-family: Arial, sans-serif;
+      width: 220px;
+    }
+    .panel h4 { margin:0 0 8px 0; font-size:14px; }
+    .panel button {
+      display:block; width:100%; margin-top:8px; padding:6px;
+      border:none; background:#1976d2; color:#fff; border-radius:4px; cursor:pointer;
+    }
+    .panel button:active{ transform:translateY(1px); }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="panel" id="info">
+  <h4>Ruta por calles</h4>
+  <div><strong>Inicio:</strong> <span id="a-coords">—</span></div>
+  <div><strong>Destino:</strong> <span id="b-coords">—</span></div>
+  <div><strong>Distancia:</strong> <span id="distance">—</span></div>
+  <div><strong>Duración:</strong> <span id="duration">—</span></div>
+  <button id="resetBtn">Limpiar</button>
+  <small style="display:block;margin-top:6px;color:#666">Haz click en el mapa para marcar A y B.</small>
+</div>
+
+<!-- Leaflet JS -->
+<script
+  src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+  crossorigin=""
+></script>
+
+<script>
+  const map = L.map('map').setView([-16.3989, -71.535], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; OpenStreetMap contributors'
+  }).addTo(map);
+
+  let markerA = null;
+  let markerB = null;
+  let routeLine = null;
+
+  const aCoordsEl = document.getElementById('a-coords');
+  const bCoordsEl = document.getElementById('b-coords');
+  const distanceEl = document.getElementById('distance');
+  const durationEl = document.getElementById('duration');
+  const resetBtn = document.getElementById('resetBtn');
+
+  function fmtLatLng(latlng) {
+    return latlng.lat.toFixed(6) + ', ' + latlng.lng.toFixed(6);
+  }
+
+  map.on('click', async (e) => {
+    if (!markerA) {
+      markerA = L.marker(e.latlng, { draggable: true }).addTo(map).bindTooltip('Inicio', {permanent:true, direction:'right'});
+      aCoordsEl.textContent = fmtLatLng(e.latlng);
+      markerA.on('dragend', updateRoute);
+    } else if (!markerB) {
+      markerB = L.marker(e.latlng, { draggable: true }).addTo(map).bindTooltip('Destino', {permanent:true, direction:'right'});
+      bCoordsEl.textContent = fmtLatLng(e.latlng);
+      markerB.on('dragend', updateRoute);
+      await updateRoute();
+    } else {
+      markerB.setLatLng(e.latlng);
+      bCoordsEl.textContent = fmtLatLng(e.latlng);
+      await updateRoute();
+    }
+  });
+
+  async function updateRoute() {
+    if (!markerA || !markerB) return;
+
+    const start = markerA.getLatLng();
+    const end = markerB.getLatLng();
+
+    // API de enrutamiento OSRM (usa datos de OSM)
+    const url = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+
+    try {
+      const res = await fetch(url);
+      const data = await res.json();
+
+      if (data.code !== 'Ok') throw new Error('Error al obtener la ruta');
+
+      const route = data.routes[0];
+      const distanceKm = (route.distance / 1000).toFixed(2);
+      const durationMin = (route.duration / 60).toFixed(1);
+
+      distanceEl.textContent = `${distanceKm} km`;
+      durationEl.textContent = `${durationMin} min`;
+
+      const geojson = L.geoJSON(route.geometry, { color: '#1976d2', weight: 5 });
+
+      if (routeLine) map.removeLayer(routeLine);
+      routeLine = geojson.addTo(map);
+
+      map.fitBounds(geojson.getBounds(), { padding: [50, 50] });
+    } catch (err) {
+      alert('No se pudo calcular la ruta: ' + err.message);
+    }
+  }
+
+  resetBtn.addEventListener('click', () => {
+    if (markerA) { map.removeLayer(markerA); markerA = null; }
+    if (markerB) { map.removeLayer(markerB); markerB = null; }
+    if (routeLine) { map.removeLayer(routeLine); routeLine = null; }
+    aCoordsEl.textContent = '—';
+    bCoordsEl.textContent = '—';
+    distanceEl.textContent = '—';
+    durationEl.textContent = '—';
+  });
+</script>
+
+</body>
+</html>

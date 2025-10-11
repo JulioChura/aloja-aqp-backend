@@ -62,8 +62,19 @@ class AccommodationServiceAdmin(admin.ModelAdmin):
 
 @admin.register(UniversityDistance)
 class UniversityDistanceAdmin(admin.ModelAdmin):
-    list_display = ('accommodation', 'university', 'distance_km', 'walk_time_minutes', 'bus_time_minutes')
-    search_fields = ('accommodation__title', 'university__name')
+    list_display = ('accommodation', 'campus_name', 'university_name', 'distance_km', 'walk_time_minutes', 'bus_time_minutes')
+    search_fields = ('accommodation__title', 'campus__university__name')
+
+    def campus_name(self, obj):
+        return obj.campus.name
+    campus_name.admin_order_field = 'campus__name'
+    campus_name.short_description = 'Campus Name'
+
+    def university_name(self, obj):
+        return obj.campus.university.name
+    university_name.admin_order_field = 'campus__university__name'
+    university_name.short_description = 'University Name'
+
 
 @admin.register(AccommodationNearbyPlace)
 class AccommodationNearbyPlaceAdmin(admin.ModelAdmin):

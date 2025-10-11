@@ -4,20 +4,32 @@ from .models import *
 from .serializers import *
 from .permissions import IsOwnerOrReadOnly, IsStudentOrReadOnly
 
+
 #  Datos de referencia 
 class AccommodationStatusViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AccommodationStatus.objects.all()
     serializer_class = AccommodationStatusSerializer
 
+
 class AccommodationTypeViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = AccommodationType.objects.all()
     serializer_class = AccommodationTypeSerializer
+
 
 class PredefinedServiceViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = PredefinedService.objects.all()
     serializer_class = PredefinedServiceSerializer
 
+
 #  Alojamiento 
+class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = AccommodationSerializer
+    permission_classes = [permissions.AllowAny]
+    
+    def get_queryset(self):
+        # Filtra solo los alojamientos con estado "published"
+        return Accommodation.objects.filter(status__name__iexact="published").select_related('owner', 'accommodation_type')
+    
 class AccommodationViewSet(viewsets.ModelViewSet):
     queryset = Accommodation.objects.all()
     serializer_class = AccommodationSerializer
@@ -25,18 +37,19 @@ class AccommodationViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'ownerprofile'):
+        if hasattr(user, 'owner_profile'):
             # Propietario ve solo sus alojamientos
-            return Accommodation.objects.filter(owner=user.ownerprofile)
+            return Accommodation.objects.filter(owner=user.owner_profile)
         return Accommodation.objects.all()  # Estudiantes ven todos
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not hasattr(user, 'ownerprofile'):
+        if not hasattr(user, 'owner_profile'):
             raise PermissionDenied("Solo propietarios pueden crear alojamientos")
-        serializer.save(owner=user.ownerprofile)
+        serializer.save(owner=user.owner_profile)
 
-# Fotos 
+
+#  Fotos 
 class AccommodationPhotoViewSet(viewsets.ModelViewSet):
     queryset = AccommodationPhoto.objects.all()
     serializer_class = AccommodationPhotoSerializer
@@ -44,9 +57,10 @@ class AccommodationPhotoViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'ownerprofile'):
-            return AccommodationPhoto.objects.filter(accommodation__owner=user.ownerprofile)
+        if hasattr(user, 'owner_profile'):
+            return AccommodationPhoto.objects.filter(accommodation__owner=user.owner_profile)
         return AccommodationPhoto.objects.none()  # Estudiantes no pueden ver aquí, usar nested serializer en alojamiento
+
 
 #  Servicios 
 class AccommodationServiceViewSet(viewsets.ModelViewSet):
@@ -56,9 +70,10 @@ class AccommodationServiceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'ownerprofile'):
-            return AccommodationService.objects.filter(accommodation__owner=user.ownerprofile)
+        if hasattr(user, 'owner_profile'):
+            return AccommodationService.objects.filter(accommodation__owner=user.owner_profile)
         return AccommodationService.objects.none()
+
 
 #  Distancias a universidades 
 class UniversityDistanceViewSet(viewsets.ModelViewSet):
@@ -68,9 +83,11 @@ class UniversityDistanceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'ownerprofile'):
-            return UniversityDistance.objects.filter(accommodation__owner=user.ownerprofile)
+        if hasattr(user, 'owner_profile'):
+            return UniversityDistance.objects.filter(accommodation__owner=user.owner_profile)
         return UniversityDistance.objects.none()
+
+
 
 #  Lugares cercanos 
 class AccommodationNearbyPlaceViewSet(viewsets.ModelViewSet):
@@ -80,11 +97,12 @@ class AccommodationNearbyPlaceViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'ownerprofile'):
-            return AccommodationNearbyPlace.objects.filter(accommodation__owner=user.ownerprofile)
+        if hasattr(user, 'owner_profile'):
+            return AccommodationNearbyPlace.objects.filter(accommodation__owner=user.owner_profile)
         return AccommodationNearbyPlace.objects.none()
 
-# Reseñas 
+
+#  Reseñas 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
@@ -92,15 +110,16 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'studentprofile'):
+        if hasattr(user, 'student_profile'):
             return Review.objects.all()
         return Review.objects.none()
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not hasattr(user, 'studentprofile'):
+        if not hasattr(user, 'student_profile'):
             raise PermissionDenied("Solo estudiantes pueden dejar reseñas")
-        serializer.save(student=user.studentprofile)
+        serializer.save(student=user.student_profile)
+
 
 #  Favoritos 
 class FavoriteViewSet(viewsets.ModelViewSet):
@@ -110,12 +129,12 @@ class FavoriteViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
-        if hasattr(user, 'studentprofile'):
-            return Favorite.objects.filter(student=user.studentprofile)
+        if hasattr(user, 'student_profile'):
+            return Favorite.objects.filter(student=user.student_profile)
         return Favorite.objects.none()
 
     def perform_create(self, serializer):
         user = self.request.user
-        if not hasattr(user, 'studentprofile'):
+        if not hasattr(user, 'student_profile'):
             raise PermissionDenied("Solo estudiantes pueden agregar favoritos")
-        serializer.save(student=user.studentprofile)
+        serializer.save(student=user.student_profile)

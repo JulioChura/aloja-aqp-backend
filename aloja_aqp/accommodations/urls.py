@@ -14,6 +14,7 @@ router.register(r'university-distances', UniversityDistanceViewSet)
 router.register(r'accommodation-nearby-places', AccommodationNearbyPlaceViewSet)
 router.register(r'reviews', ReviewViewSet)
 router.register(r'favorites', FavoriteViewSet)
+router.register(r'public/accommodations', PublicAccommodationViewSet, basename='public-accommodations')
 
 urlpatterns = [
     path('api/', include(router.urls)),
