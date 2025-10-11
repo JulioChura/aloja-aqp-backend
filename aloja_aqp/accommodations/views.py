@@ -3,6 +3,9 @@ from rest_framework.exceptions import PermissionDenied
 from .models import *
 from .serializers import *
 from .permissions import IsOwnerOrReadOnly, IsStudentOrReadOnly
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
 
 #  Datos de referencia 
@@ -138,3 +141,50 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         if not hasattr(user, 'student_profile'):
             raise PermissionDenied("Solo estudiantes pueden agregar favoritos")
         serializer.save(student=user.student_profile)
+
+
+""" 
+creando accomodation por partes 
+"""
+
+from rest_framework import viewsets, permissions
+from .models import Accommodation
+from .serializers import AccommodationBasicCreateSerializer, AccommodationSerializer
+from .permissions import IsOwnerOrReadOnly
+
+class AccommodationViewSet(viewsets.ModelViewSet):
+    queryset = Accommodation.objects.all()
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+
+    def get_serializer_class(self):
+        # Usar serializer básico solo para crear
+        if self.action == 'create':
+            return AccommodationBasicCreateSerializer
+        return AccommodationSerializer
+
+    def perform_create(self, serializer):
+        # Estado inicial "en proceso"
+        status_obj = AccommodationStatus.objects.get(name="draft")
+        serializer.save(owner=self.request.user.owner_profile, status=status_obj)
+        
+
+class AccommodationPhotoBulkCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = AccommodationPhotoBulkSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Fotos guardadas correctamente."}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AccommodationServiceBulkCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+
+    def post(self, request):
+        serializer = AccommodationServiceBulkSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Servicios guardados correctamente."}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

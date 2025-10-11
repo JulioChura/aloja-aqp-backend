@@ -92,3 +92,7 @@ class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('student', 'accommodation', 'date_added')
     search_fields = ('student__user__email', 'accommodation__title')
     readonly_fields = ('student', 'accommodation', 'date_added')
+
+@admin.register(AccommodationPhoto)
+class AccommodationPhotoAdmin(admin.ModelAdmin):
+    pass

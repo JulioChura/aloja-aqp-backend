@@ -9,7 +9,7 @@ from users.models import OwnerProfile, StudentProfile
 from universities.models import University
 from points.models import PointOfInterest
 
-# ----- SERIALIZERS DE DATOS DE REFERENCIA -----
+#  SERIALIZERS DE DATOS DE REFERENCIA 
 class AccommodationStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccommodationStatus
@@ -25,7 +25,7 @@ class PredefinedServiceSerializer(serializers.ModelSerializer):
         model = PredefinedService
         fields = '__all__'
 
-# ----- NESTED SERIALIZERS -----
+#  NESTED SERIALIZERS 
 class AccommodationPhotoNestedSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccommodationPhoto
@@ -81,6 +81,11 @@ class AccommodationSerializer(serializers.ModelSerializer):
         read_only_fields = ['owner', 'publication_date', 'created_at', 'updated_at']
 
 #  OTROS SERIALIZERS SIMPLES 
+class PhotoSerializer(serializers.Serializer):
+    image = serializers.CharField()
+    order_num = serializers.IntegerField()
+    is_main = serializers.BooleanField()
+
 class AccommodationPhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccommodationPhoto
@@ -114,3 +119,72 @@ class FavoriteSerializer(serializers.ModelSerializer):
         model = Favorite
         fields = '__all__'
         read_only_fields = ['student', 'date_added']
+
+
+"""
+accommodations/serializers.py
+"""
+from rest_framework import serializers
+from .models import Accommodation
+
+class AccommodationBasicCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Accommodation
+        fields = [
+            'title', 'description', 'accommodation_type', 'address',
+            'latitude', 'longitude', 'monthly_price', 'coexistence_rules'
+        ]
+
+class AccommodationPhotoBulkSerializer(serializers.Serializer):
+    accommodation = serializers.IntegerField()
+    photos = PhotoSerializer(many=True)
+
+    def create(self, validated_data):
+        accommodation_id = validated_data['accommodation']
+        try:
+            accommodation = Accommodation.objects.get(pk=accommodation_id)
+        except Accommodation.DoesNotExist:
+            raise serializers.ValidationError("El alojamiento no existe.")
+        photos_data = validated_data['photos']
+        created_photos = []
+        for photo_data in photos_data:
+            photo_obj = AccommodationPhoto.objects.create(
+                accommodation=accommodation,
+                image=photo_data['image'],
+                order_num=photo_data.get('order_num', 1),
+                is_main=photo_data.get('is_main', False)
+            )
+            created_photos.append(photo_obj)
+        return created_photos
+
+class ServiceBulkSerializer(serializers.Serializer):
+    service = serializers.IntegerField()
+    detail = serializers.CharField(required=False)
+
+class AccommodationServiceBulkSerializer(serializers.Serializer):
+    accommodation = serializers.IntegerField()
+    services = ServiceBulkSerializer(many=True)
+
+    def create(self, validated_data):
+        accommodation_id = validated_data['accommodation']
+        try:
+            accommodation = Accommodation.objects.get(pk=accommodation_id)
+        except Accommodation.DoesNotExist:
+            raise serializers.ValidationError("El alojamiento no existe.")
+        services_data = validated_data['services']
+        created_services = []
+        for service_data in services_data:
+            # Verifica si ya existe
+            exists = AccommodationService.objects.filter(
+                accommodation=accommodation,
+                service_id=service_data['service']
+            ).exists()
+            if not exists:
+                service_obj = AccommodationService.objects.create(
+                    accommodation=accommodation,
+                    service_id=service_data['service'],
+                    detail=service_data.get('detail', '')
+                )
+                created_services.append(service_obj)
+        return created_services
+

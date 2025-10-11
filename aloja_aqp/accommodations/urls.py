@@ -17,5 +17,7 @@ router.register(r'favorites', FavoriteViewSet)
 router.register(r'public/accommodations', PublicAccommodationViewSet, basename='public-accommodations')
 
 urlpatterns = [
+    path('api/accommodation-services/bulk/', AccommodationServiceBulkCreateView.as_view(), name='accommodation-services-bulk'),
+    path('api/accommodation-photos/bulk/', AccommodationPhotoBulkCreateView.as_view(), name='accommodation-photos-bulk'),
     path('api/', include(router.urls)),
 ]
