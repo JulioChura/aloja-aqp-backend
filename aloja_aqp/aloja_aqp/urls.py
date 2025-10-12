@@ -31,6 +31,10 @@ urlpatterns = [
     path('api/auth/', include('users.urls')),
     path('accounts/', include('allauth.urls')),
 
+    # Rutas del módulo accommodation y puntos
+    path('', include('accommodations.urls')),
+    path('api/', include('points.urls')),
+
     # Documentación automática
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

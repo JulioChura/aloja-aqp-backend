@@ -2,6 +2,9 @@ from django.db import models
 from users.models import OwnerProfile, StudentProfile
 from universities.models import University
 from points.models import PointOfInterest
+from cloudinary.models import CloudinaryField
+from universities.models import UniversityCampus
+
 
 class AccommodationStatus(models.Model):
     name = models.CharField(max_length=50, unique=True) 
@@ -37,7 +40,7 @@ class Accommodation(models.Model):
 
 class AccommodationPhoto(models.Model):
     accommodation = models.ForeignKey(Accommodation, on_delete=models.CASCADE, related_name="photos")
-    image_url = models.URLField()
+    image = CloudinaryField('image')
     order_num = models.IntegerField(default=0)
     is_main = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -47,6 +50,7 @@ class AccommodationPhoto(models.Model):
 
 class PredefinedService(models.Model):
     name = models.CharField(max_length=100, unique=True)
+    icon_class = models.CharField(max_length=100, blank=True, null=True) 
 
     def __str__(self):
         return self.name
@@ -65,17 +69,16 @@ class AccommodationService(models.Model):
 
 class UniversityDistance(models.Model):
     accommodation = models.ForeignKey(Accommodation, on_delete=models.CASCADE)
-    university = models.ForeignKey(University, on_delete=models.CASCADE)
+    campus = models.ForeignKey(UniversityCampus, on_delete=models.CASCADE, related_name='accommodation_distances')
     distance_km = models.DecimalField(max_digits=6, decimal_places=2)
     walk_time_minutes = models.IntegerField(null=True, blank=True)
     bus_time_minutes = models.IntegerField(null=True, blank=True)
 
     class Meta:
-        unique_together = ("accommodation", "university")
+        unique_together = ("accommodation", "campus")
 
     def __str__(self):
-        return f"{self.accommodation.title} - {self.university.abbreviation}"
-
+        return f"{self.accommodation.title} - {self.campus}"
 
 class AccommodationNearbyPlace(models.Model):
     accommodation = models.ForeignKey(

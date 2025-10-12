@@ -2,12 +2,12 @@ from rest_framework import serializers
 from django.contrib.auth.hashers import make_password
 from .models import OwnerProfile, User, StudentProfile, UserStatus  
 from universities.serializers import StudentUniversitySerializer
-from universities.models import StudentUniversity
+from universities.models import StudentUniversity, UniversityCampus
 from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate
 from django.contrib.auth import password_validation
 from .utils.api_reniec import verificar_dni, normalize_name
-
+ 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -21,22 +21,17 @@ class LoginSerializer(serializers.Serializer):
     
 class StudentRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6, style={'input_type': 'password'})
-    universities = serializers.ListField(
+    campuses = serializers.ListField(
         child=serializers.IntegerField(), write_only=True, required=False
-    )
+    )  # ahora enviamos sedes
     phone_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'first_name', 'last_name','universities', 'phone_number']
-
-    def validate_email(self, value):
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError("El email ya está en uso.")
-        return value
+        fields = ['email', 'password', 'first_name', 'last_name','campuses', 'phone_number']
 
     def create(self, validated_data):
-        universities_data = validated_data.pop('universities', [])
+        campuses_data = validated_data.pop('campuses', [])
         phone_number = validated_data.pop('phone_number', '')
 
         user = User.objects.create_user(
@@ -46,7 +41,6 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
             last_name=validated_data.get('last_name', '')
         )
 
-        # Asignar rol de estudiante
         student_group, _ = Group.objects.get_or_create(name='student')
         user.groups.add(student_group)
 
@@ -58,43 +52,47 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
             status=active_status
         )
 
-        for university_id in universities_data:
-            StudentUniversity.objects.create(
-                student=student_profile,
-                university_id=university_id
-            )
-
+        # Asociar sedes si se enviaron
+        for campus_id in campuses_data:
+            if UniversityCampus.objects.filter(id=campus_id).exists():
+                StudentUniversity.objects.create(
+                    student=student_profile,
+                    campus_id=campus_id
+                )
+            else:
+                raise serializers.ValidationError(f"Campus con id {campus_id} no existe.")
         return user
+
 
 
 # falta probar
 from users.models import UserStatus
 
-def create(self, validated_data):
-    phone_number = validated_data.pop('phone_number', '')
-    company_name = validated_data.pop('company_name', '')
+# def create(self, validated_data):
+#     phone_number = validated_data.pop('phone_number', '')
+#     company_name = validated_data.pop('company_name', '')
 
-    user = User.objects.create_user(
-        email=validated_data['email'],
-        password=validated_data['password'],
-        first_name=validated_data.get('first_name', ''),
-        last_name=validated_data.get('last_name', ''),
-    )
+#     user = User.objects.create_user(
+#         email=validated_data['email'],
+#         password=validated_data['password'],
+#         first_name=validated_data.get('first_name', ''),
+#         last_name=validated_data.get('last_name', ''),
+#     )
 
-    owner_group, _ = Group.objects.get_or_create(name='owner')
-    user.groups.add(owner_group)
+#     owner_group, _ = Group.objects.get_or_create(name='owner')
+#     user.groups.add(owner_group)
 
-    # Estado por defecto: Activo
-    active_status, _ = UserStatus.objects.get_or_create(name='Activo')
+#     # Estado por defecto: Activo
+#     active_status, _ = UserStatus.objects.get_or_create(name='Activo')
 
-    owner_profile = OwnerProfile.objects.create(
-        user=user,
-        company_name=company_name,
-        phone_number=phone_number,
-        status=active_status
-    )
+#     owner_profile = OwnerProfile.objects.create(
+#         user=user,
+#         company_name=company_name,
+#         phone_number=phone_number,
+#         status=active_status
+#     )
 
-    return user
+#     return user
 
 class OwnerRegistrationSerializer(serializers.Serializer):
     phone_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
@@ -159,21 +157,44 @@ from rest_framework import serializers
 from .models import User, StudentProfile, OwnerProfile
 
 class StudentProfileSerializer(serializers.ModelSerializer):
+    # Esto construye la estructura jerárquica de universidades -> sedes
+    universities = serializers.SerializerMethodField()
+
     class Meta:
         model = StudentProfile
-        fields = ['phone_number', 'status_id']
+        fields = ['phone_number', 'status_id', 'universities']
+
+    def get_universities(self, obj):
+        # Obtenemos todas las sedes del estudiante
+        student_universities = StudentUniversity.objects.filter(student=obj)
+        
+        # Diccionario para agrupar por universidad
+        universities_dict = {}
+        for su in student_universities:
+            uni = su.campus.university
+            if uni.id not in universities_dict:
+                universities_dict[uni.id] = {
+                    'university_id': uni.id,
+                    'university_name': uni.name,
+                    'campuses': []
+                }
+            universities_dict[uni.id]['campuses'].append({
+                'campus_id': su.campus.id,
+                'campus_name': su.campus.name
+            })
+        return list(universities_dict.values())
 
 class OwnerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OwnerProfile
         fields = ['phone_number', 'dni', 'contact_address', 'verified', 'status_id']
-
+        
 class UserResponseSerializer(serializers.ModelSerializer):
-    avatar = serializers.ImageField()
     full_name = serializers.SerializerMethodField()
     roles = serializers.SerializerMethodField()
     student_profile = StudentProfileSerializer(read_only=True)
     owner_profile = OwnerProfileSerializer(read_only=True)
+    avatar = serializers.ImageField()
 
     class Meta:
         model = User
