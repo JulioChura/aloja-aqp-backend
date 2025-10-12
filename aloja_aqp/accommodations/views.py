@@ -129,10 +129,7 @@ class FavoriteViewSet(viewsets.ModelViewSet):
 creando accomodation por partes 
 """
 
-from rest_framework import viewsets, permissions
-from .models import Accommodation
-from .serializers import AccommodationBasicCreateSerializer, AccommodationSerializer
-from .permissions import IsOwnerOrReadOnly
+
 
 class AccommodationViewSet(viewsets.ModelViewSet):
     queryset = Accommodation.objects.all()
@@ -146,8 +143,8 @@ class AccommodationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if hasattr(user, 'owner_profile'):
-            return Accommodation.objects.filter(owner=user.owner_profile)
-        return Accommodation.objects.all()
+            return Accommodation.objects.filter(owner=user.owner_profile).exclude(status__name="deleted")
+        return Accommodation.objects.all().exclude(status__name="deleted")
 
     def perform_create(self, serializer):
         status_obj = AccommodationStatus.objects.get(name="draft")
@@ -161,6 +158,23 @@ class AccommodationViewSet(viewsets.ModelViewSet):
         accommodation.save()
         return Response({"detail": "Alojamiento publicado correctamente."}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsOwnerOrReadOnly])
+    def hide(self, request, pk=None):
+        accommodation = self.get_object()
+        status_obj = AccommodationStatus.objects.get(name="hidden")
+        accommodation.status = status_obj
+        accommodation.save()
+        return Response({"detail": "Alojamiento ocultado correctamente."}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated, IsOwnerOrReadOnly], url_path="delete-original")
+    def delete_logical(self, request, pk=None):
+        accommodation = self.get_object()
+        status_obj = AccommodationStatus.objects.get(name="deleted")
+        accommodation.status = status_obj
+        accommodation.save()
+        return Response({"detail": "Alojamiento borrado correctamente."}, status=status.HTTP_200_OK)
+   
+    
 class AccommodationPhotoBulkCreateView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
