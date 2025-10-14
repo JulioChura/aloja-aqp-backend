@@ -190,7 +190,6 @@ class OwnerProfileSerializer(serializers.ModelSerializer):
         fields = ['phone_number', 'dni', 'contact_address', 'verified', 'status_id']
         
 class UserResponseSerializer(serializers.ModelSerializer):
-    full_name = serializers.SerializerMethodField()
     roles = serializers.SerializerMethodField()
     student_profile = StudentProfileSerializer(read_only=True)
     owner_profile = OwnerProfileSerializer(read_only=True)
@@ -198,10 +197,16 @@ class UserResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'full_name', 'roles', 'student_profile', 'owner_profile', 'avatar']
-
-    def get_full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
+        fields = [
+            'id',
+            'email',
+            'first_name',
+            'last_name',
+            'roles',
+            'student_profile',
+            'owner_profile',
+            'avatar'
+        ]
 
     def get_roles(self, obj):
         return [group.name for group in obj.groups.all()]
