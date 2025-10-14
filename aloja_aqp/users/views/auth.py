@@ -54,7 +54,13 @@ class OwnerRegistrationView(generics.CreateAPIView):
             "user": user_data
         }, status=status.HTTP_201_CREATED)
 
-
+class CurrentUserProfileView(generics.RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        serializer = UserResponseSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 

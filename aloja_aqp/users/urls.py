@@ -1,7 +1,7 @@
 from django.urls import path
 from .views.auth import (
     UserLoginView, UserRegistrationView, OwnerRegistrationView,
-    LogoutView, ChangePasswordView
+    LogoutView, ChangePasswordView, CurrentUserProfileView
 )
 from .views.google_auth import GoogleLoginAPIView
 from .views.profile import UpdateUserInfoView
@@ -14,5 +14,6 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='token_logout'), 
     path('google-login/', GoogleLoginAPIView.as_view(), name='google-login'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('me/', CurrentUserProfileView.as_view(), name='current-user-profile'),
 
 ]
