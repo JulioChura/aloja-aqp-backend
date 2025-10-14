@@ -39,10 +39,11 @@ class GoogleLoginAPIView(APIView):
                     try:
                         upload_result = cloudinary.uploader.upload(picture_url)
                         user.avatar = upload_result['public_id']
+
                     except Exception as e:
                         print("Error subiendo avatar desde Google:", e)
                 user.save()
-
+                user.refresh_from_db()  # 🔄 recarga avatar y demás campos
                 student_group, _ = Group.objects.get_or_create(name='student')
                 user.groups.add(student_group)
 
