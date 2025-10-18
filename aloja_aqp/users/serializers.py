@@ -162,7 +162,15 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = StudentProfile
-        fields = ['phone_number', 'status_id', 'universities']
+        fields = [
+            'phone_number',
+            'gender',
+            'age',
+            'career',
+            'bio',
+            'status_id',
+            'universities',  # mantiene tu estructura jerárquica
+        ]
 
     def get_universities(self, obj):
         # Obtenemos todas las sedes del estudiante

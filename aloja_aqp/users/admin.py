@@ -52,6 +52,15 @@ class OwnerProfileAdmin(admin.ModelAdmin):
 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'phone_number', 'status')
+    list_display = (
+        'user',
+        'phone_number',
+        'gender',
+        'age',
+        'campus',
+        'career',
+        'bio',
+        'status',
+    )
     list_filter = ('status',)
     search_fields = ('user__email', 'phone_number')

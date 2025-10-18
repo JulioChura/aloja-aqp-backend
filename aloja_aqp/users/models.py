@@ -72,11 +72,23 @@ class OwnerProfile(models.Model):
         return f"{self.user.email} - {self.status}"
 
 class StudentProfile(models.Model):
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other'),
+    ]
+
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='student_profile')
     phone_number = models.CharField(max_length=20, blank=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True, null=True)
+    age = models.PositiveIntegerField(blank=True, null=True)
+    campus = models.ForeignKey(University, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
+    career = models.CharField(max_length=100, blank=True)
+    bio = models.TextField(blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     status = models.ForeignKey('UserStatus', on_delete=models.SET_NULL, null=True, default=None)
 
     def __str__(self):
-        return f"{self.user.email} - {self.status}"
+        return f"{self.user.email} - {self.status or 'No status'}"
