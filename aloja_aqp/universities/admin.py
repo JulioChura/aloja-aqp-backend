@@ -24,6 +24,6 @@ class StudentUniversityAdmin(admin.ModelAdmin):
 
 @admin.register(UniversityCampus)
 class UniversityCampusAdmin(admin.ModelAdmin):
-    list_display = ('name', 'university', 'address', 'latitude', 'longitude')
+    list_display = ('id','name', 'university', 'address', 'latitude', 'longitude')
     search_fields = ('name', 'university__name', 'address')
     list_filter = ('university',)

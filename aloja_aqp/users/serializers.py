@@ -196,7 +196,33 @@ class OwnerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OwnerProfile
         fields = ['phone_number', 'dni', 'contact_address', 'verified', 'status_id']
-        
+
+class StudentProfileSerializer(serializers.ModelSerializer):
+    campuses = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StudentProfile
+        fields = [
+            'phone_number',
+            'gender',
+            'age',
+            'career',
+            'bio',
+            'campuses',
+            'status'
+        ]
+
+    def get_campuses(self, obj):
+        # Obtenemos todos los campus asociados a este estudiante
+        return [
+            {
+                "id": su.campus.id,
+                "name": su.campus.name,
+                "university": su.campus.university.name if su.campus.university else None
+            }
+            for su in StudentUniversity.objects.filter(student=obj)
+        ]
+
 class UserResponseSerializer(serializers.ModelSerializer):
     roles = serializers.SerializerMethodField()
     student_profile = StudentProfileSerializer(read_only=True)
