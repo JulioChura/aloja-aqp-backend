@@ -27,9 +27,15 @@ class PredefinedServiceSerializer(serializers.ModelSerializer):
 
 #  NESTED SERIALIZERS 
 class AccommodationPhotoNestedSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
     class Meta:
         model = AccommodationPhoto
         fields = ['id', 'image', 'order_num', 'is_main']
+    def get_image(self, obj):
+        print("evaluando image url nested")
+        if obj.image:
+            return obj.image.url  # Cloudinary ya devuelve la URL completa
+        return None
 
 class AccommodationServiceNestedSerializer(serializers.ModelSerializer):
     service = PredefinedServiceSerializer(read_only=True)
@@ -74,7 +80,7 @@ class AccommodationSerializer(serializers.ModelSerializer):
     nearby_places = AccommodationNearbyPlaceNestedSerializer(many=True, read_only=True)
     reviews = ReviewNestedSerializer(many=True, read_only=True)
     favorites = FavoriteNestedSerializer(many=True, read_only=True)
-
+    status = serializers.CharField(source="status.name", read_only=True)
     class Meta:
         model = Accommodation
         fields = '__all__'
@@ -131,7 +137,7 @@ class AccommodationBasicCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Accommodation
         fields = [
-            'title', 'description', 'accommodation_type', 'address',
+            'id','title', 'description', 'accommodation_type', 'address',
             'latitude', 'longitude', 'monthly_price', 'coexistence_rules'
         ]
 

@@ -35,6 +35,9 @@ urlpatterns = [
     path('', include('accommodations.urls')),
     path('api/', include('points.urls')),
 
+    # Nueva línea para universidades y campus
+    path('api/universities/', include('universities.urls')),
+
     # Documentación automática
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

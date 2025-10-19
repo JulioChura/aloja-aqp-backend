@@ -36,6 +36,8 @@ class UniversitySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'abbreviation', 'address']
         read_only_fields = ['id']
 
+
+
 class CampusSerializer(serializers.ModelSerializer):
     campus_id = serializers.IntegerField(source='campus.id')
     campus_name = serializers.CharField(source='campus.name')
@@ -43,6 +45,11 @@ class CampusSerializer(serializers.ModelSerializer):
     class Meta:
         model = StudentUniversity
         fields = ['campus_id', 'campus_name']
+        
+class UniversityCampusSimpleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UniversityCampus
+        fields = ['id', 'name']
         
 class UniversityWithCampusesSerializer(serializers.Serializer):
     university_id = serializers.IntegerField()

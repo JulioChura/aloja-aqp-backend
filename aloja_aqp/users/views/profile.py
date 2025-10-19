@@ -38,15 +38,20 @@ class UpdateUserInfoView(APIView):
             if isinstance(campuses, int) or isinstance(campuses, str):
                 campuses = [int(campuses)]
 
+            valid_campuses = []
             for campus_id in campuses:
                 if not UniversityCampus.objects.filter(id=campus_id).exists():
                     return Response(
                         {"campus": [f"Invalid pk '{campus_id}' - object does not exist."]},
                         status=status.HTTP_400_BAD_REQUEST
                     )
+                valid_campuses.append(campus_id)
 
-                # Crear o mantener relación StudentUniversity
-                StudentUniversity.objects.get_or_create(
+            # Eliminar relaciones anteriores del estudiante
+            StudentUniversity.objects.filter(student=user.student_profile).delete()
+            # Crear solo las nuevas relaciones
+            for campus_id in valid_campuses:
+                StudentUniversity.objects.create(
                     student=user.student_profile,
                     campus_id=campus_id
                 )
