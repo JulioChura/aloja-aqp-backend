@@ -32,7 +32,6 @@ class AccommodationPhotoNestedSerializer(serializers.ModelSerializer):
         model = AccommodationPhoto
         fields = ['id', 'image', 'order_num', 'is_main']
     def get_image(self, obj):
-        print("evaluando image url nested")
         if obj.image:
             return obj.image.url  # Cloudinary ya devuelve la URL completa
         return None

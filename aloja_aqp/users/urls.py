@@ -5,6 +5,7 @@ from .views.auth import (
 )
 from .views.google_auth import GoogleLoginAPIView
 from .views.profile import UpdateUserInfoView
+from .views.owner import OwnerProfileDetailView
 
 urlpatterns = [
     path('login/', UserLoginView.as_view(), name='token_obtain_pair'),
@@ -15,5 +16,6 @@ urlpatterns = [
     path('google-login/', GoogleLoginAPIView.as_view(), name='google-login'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('me/', CurrentUserProfileView.as_view(), name='current-user-profile'),
+    path('owners/<int:id>/', OwnerProfileDetailView.as_view(), name='owner-detail'),
 
 ]

@@ -7,7 +7,10 @@ from django.contrib.auth.models import Group
 from django.contrib.auth import authenticate
 from django.contrib.auth import password_validation
 from .utils.api_reniec import verificar_dni, normalize_name
- 
+from cloudinary.utils import cloudinary_url
+
+
+
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -196,6 +199,35 @@ class OwnerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OwnerProfile
         fields = ['phone_number', 'dni', 'contact_address', 'verified', 'status_id']
+
+class UserSerializer(serializers.ModelSerializer):
+    avatar = serializers.SerializerMethodField()
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'email', 'avatar']
+    def get_avatar(self, obj):
+        # Evita errores si el avatar está vacío o es un objeto Cloudinary vacío
+        if not obj.avatar:
+            return None
+        
+        # Obtiene el public_id como string
+        public_id = str(obj.avatar)
+
+        if not public_id or public_id.lower() == "none":
+            return None
+
+        # Genera la URL completa (https)
+        url, _ = cloudinary_url(public_id, secure=True)
+        return url
+        
+class OwnerProfileSViewDataSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    class Meta:
+        model = OwnerProfile
+        fields = '__all__'  # o especifica los campos que quieras devolver
+
+
+
 
 class StudentProfileSerializer(serializers.ModelSerializer):
     campuses = serializers.SerializerMethodField()
