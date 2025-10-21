@@ -32,6 +32,8 @@ class Accommodation(models.Model):
     publication_date = models.DateTimeField(auto_now_add=True)
     status = models.ForeignKey(AccommodationStatus, on_delete=models.SET_NULL, null=True, default=None)
 
+    rooms = models.PositiveIntegerField(default=1) 
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -8,6 +8,8 @@ from .models import (
 from users.models import OwnerProfile, StudentProfile
 from universities.models import University, UniversityCampus
 from points.models import PointOfInterest
+from users.serializers import OwnerProfileSerializer
+from users.serializers import UserSerializer
 
 #  SERIALIZERS DE DATOS DE REFERENCIA 
 class AccommodationStatusSerializer(serializers.ModelSerializer):
@@ -80,6 +82,8 @@ class AccommodationSerializer(serializers.ModelSerializer):
     reviews = ReviewNestedSerializer(many=True, read_only=True)
     favorites = FavoriteNestedSerializer(many=True, read_only=True)
     status = serializers.CharField(source="status.name", read_only=True)
+    owner = OwnerProfileSerializer(read_only=True)
+    user = UserSerializer(source='owner.user', read_only=True)
     class Meta:
         model = Accommodation
         fields = '__all__'
@@ -137,7 +141,7 @@ class AccommodationBasicCreateSerializer(serializers.ModelSerializer):
         model = Accommodation
         fields = [
             'id','title', 'description', 'accommodation_type', 'address',
-            'latitude', 'longitude', 'monthly_price', 'coexistence_rules'
+            'latitude', 'longitude', 'monthly_price', 'coexistence_rules','rooms'
         ]
 
 class AccommodationPhotoBulkSerializer(serializers.Serializer):
