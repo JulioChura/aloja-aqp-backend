@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions
 from rest_framework.exceptions import PermissionDenied
 from .models import *
 from .serializers import *
-from .permissions import IsOwnerOrReadOnly, IsStudentOrReadOnly
+from .permissions import IsOwnerOrReadOnly, IsStudentOrReadOnly,IsAccommodationOwnerOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -38,7 +38,7 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
 class AccommodationPhotoViewSet(viewsets.ModelViewSet):
     queryset = AccommodationPhoto.objects.all()
     serializer_class = AccommodationPhotoSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsAccommodationOwnerOrReadOnly]
 
     def get_queryset(self):
         user = self.request.user
@@ -51,7 +51,7 @@ class AccommodationPhotoViewSet(viewsets.ModelViewSet):
 class AccommodationServiceViewSet(viewsets.ModelViewSet):
     queryset = AccommodationService.objects.all()
     serializer_class = AccommodationServiceSerializer
-    permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated, IsAccommodationOwnerOrReadOnly]
 
     def get_queryset(self):
         user = self.request.user
