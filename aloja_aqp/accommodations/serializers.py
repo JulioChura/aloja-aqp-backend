@@ -60,11 +60,11 @@ class AccommodationNearbyPlaceNestedSerializer(serializers.ModelSerializer):
         fields = ['id', 'point_of_interest', 'distance_km', 'walking_time_min']
 
 class ReviewNestedSerializer(serializers.ModelSerializer):
-    student = serializers.CharField(source='student.user.email', read_only=True)
+    user  = UserSerializer(source='student.user', read_only=True)
 
     class Meta:
         model = Review
-        fields = ['id', 'student', 'rating', 'comment', 'review_date', 'status']
+        fields = ['id', 'user', 'rating', 'comment', 'review_date', 'status']
 
 class FavoriteNestedSerializer(serializers.ModelSerializer):
     student = serializers.CharField(source='student.user.email', read_only=True)
@@ -118,11 +118,12 @@ class AccommodationNearbyPlaceSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class ReviewSerializer(serializers.ModelSerializer):
+    user = UserSerializer(source='student.user', read_only=True)
+
     class Meta:
         model = Review
-        fields = '__all__'
-        read_only_fields = ['student', 'review_date']
-
+        fields = ['id', 'user','accommodation', 'rating', 'comment', 'review_date', 'status']
+    
 class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite

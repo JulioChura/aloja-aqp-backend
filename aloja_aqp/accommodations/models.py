@@ -103,13 +103,10 @@ class AccommodationNearbyPlace(models.Model):
 class Review(models.Model):
     accommodation = models.ForeignKey(Accommodation, on_delete=models.CASCADE, related_name="reviews")
     student = models.ForeignKey(StudentProfile, on_delete=models.CASCADE)
-    rating = models.SmallIntegerField()
+    rating = models.SmallIntegerField(blank=True, null=True)
     comment = models.TextField(blank=True)
     review_date = models.DateTimeField(auto_now_add=True)
     status = models.CharField(max_length=20, default="visible")
-
-    class Meta:
-        unique_together = ("accommodation", "student")
 
     def __str__(self):
         return f"Review by {self.student.user.email}"
