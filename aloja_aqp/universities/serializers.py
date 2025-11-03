@@ -49,7 +49,7 @@ class CampusSerializer(serializers.ModelSerializer):
 class UniversityCampusSimpleSerializer(serializers.ModelSerializer):
     class Meta:
         model = UniversityCampus
-        fields = ['id', 'name']
+        fields = ['id', 'name', 'address', 'latitude', 'longitude']
         
 class UniversityWithCampusesSerializer(serializers.Serializer):
     university_id = serializers.IntegerField()
