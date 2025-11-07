@@ -71,9 +71,12 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
         campus_id = request.GET.get('campus_id')
         university_id = request.GET.get('university_id')
         if campus_id:
-            qs = qs.filter(university_distances__campus__id=campus_id)
+            # Use the actual reverse relation name present on Accommodation model
+            # (no explicit related_name was set on UniversityDistance.accommodation)
+            # available lookups include 'universitydistance' (see FieldError choices)
+            qs = qs.filter(universitydistance__campus__id=campus_id)
         elif university_id:
-            qs = qs.filter(university_distances__campus__university__id=university_id)
+            qs = qs.filter(universitydistance__campus__university__id=university_id)
 
         # price range
         min_price = request.GET.get('min_price')
