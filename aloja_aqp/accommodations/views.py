@@ -7,6 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
+from django.db.models import Count, Q
+from decimal import Decimal
 
 
 #  Datos de referencia 
@@ -33,6 +35,91 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         # Filtra solo los alojamientos con estado "published"
         return Accommodation.objects.filter(status__name__iexact="published").select_related('owner', 'accommodation_type')
+
+    @action(detail=False, methods=['get'], url_path='autocomplete')
+    def autocomplete(self, request):
+        q = request.GET.get('q', '').strip()
+        limit = int(request.GET.get('limit', 8))
+        if not q:
+            return Response([], status=200)
+        qs = self.get_queryset().filter(Q(title__icontains=q) | Q(address__icontains=q))[:limit]
+        results = []
+        for a in qs:
+            thumb = None
+            first_photo = a.photos.first()
+            if first_photo and first_photo.image:
+                thumb = first_photo.image.url
+            results.append({
+                'id': a.id,
+                'title': a.title,
+                'address': a.address,
+                'monthly_price': str(a.monthly_price),
+                'rooms': a.rooms,
+                'thumbnail': thumb,
+            })
+        return Response(results)
+
+    @action(detail=False, methods=['get'], url_path='filter')
+    def filter_accommodations(self, request):
+        qs = self.get_queryset()
+        # full-text like filters
+        q = request.GET.get('q')
+        if q:
+            qs = qs.filter(Q(title__icontains=q) | Q(description__icontains=q) | Q(address__icontains=q))
+
+        # university / campus filters (via UniversityDistance)
+        campus_id = request.GET.get('campus_id')
+        university_id = request.GET.get('university_id')
+        if campus_id:
+            qs = qs.filter(university_distances__campus__id=campus_id)
+        elif university_id:
+            qs = qs.filter(university_distances__campus__university__id=university_id)
+
+        # price range
+        min_price = request.GET.get('min_price')
+        max_price = request.GET.get('max_price')
+        try:
+            if min_price is not None and min_price != '':
+                qs = qs.filter(monthly_price__gte=Decimal(min_price))
+            if max_price is not None and max_price != '':
+                qs = qs.filter(monthly_price__lte=Decimal(max_price))
+        except Exception:
+            pass
+
+        # rooms
+        min_rooms = request.GET.get('min_rooms')
+        max_rooms = request.GET.get('max_rooms')
+        if min_rooms:
+            try:
+                qs = qs.filter(rooms__gte=int(min_rooms))
+            except Exception:
+                pass
+        if max_rooms:
+            try:
+                qs = qs.filter(rooms__lte=int(max_rooms))
+            except Exception:
+                pass
+
+        # services: expect comma separated ids, require accommodations that include ALL selected services
+        services = request.GET.get('services')
+        if services:
+            try:
+                service_ids = [int(s) for s in services.split(',') if s]
+                if service_ids:
+                    # filter accommodations that have services in the list
+                    qs = qs.filter(services__service__id__in=service_ids).annotate(
+                        matched_services=Count('services__service', filter=Q(services__service__id__in=service_ids), distinct=True)
+                    ).filter(matched_services__gte=len(service_ids))
+            except Exception:
+                pass
+
+        qs = qs.distinct()
+        page = self.paginate_queryset(qs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+        serializer = self.get_serializer(qs, many=True, context={'request': request})
+        return Response(serializer.data)
  
 
 class AccommodationPhotoViewSet(viewsets.ModelViewSet):

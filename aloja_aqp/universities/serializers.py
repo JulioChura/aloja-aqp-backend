@@ -31,9 +31,15 @@ class StudentUniversityDetailSerializer(serializers.ModelSerializer):
         ]
 
 class UniversitySerializer(serializers.ModelSerializer):
+    campuses = serializers.SerializerMethodField()
+
+    def get_campuses(self, obj):
+        # Lazy import: UniversityCampusSimpleSerializer is defined later in this file
+        return UniversityCampusSimpleSerializer(obj.campuses.all(), many=True).data
+
     class Meta:
         model = University
-        fields = ['id', 'name', 'abbreviation', 'address', 'logo']
+        fields = ['id', 'name', 'abbreviation', 'address', 'logo', 'campuses']
         read_only_fields = ['id']
 
 
