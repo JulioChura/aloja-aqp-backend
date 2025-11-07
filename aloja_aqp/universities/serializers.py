@@ -32,10 +32,21 @@ class StudentUniversityDetailSerializer(serializers.ModelSerializer):
 
 class UniversitySerializer(serializers.ModelSerializer):
     campuses = serializers.SerializerMethodField()
+    logo = serializers.SerializerMethodField()
 
     def get_campuses(self, obj):
         # Lazy import: UniversityCampusSimpleSerializer is defined later in this file
         return UniversityCampusSimpleSerializer(obj.campuses.all(), many=True).data
+
+    def get_logo(self, obj):
+        # Return a fully qualified URL for the CloudinaryField if available
+        try:
+            if obj.logo:
+                # CloudinaryField exposes .url
+                return obj.logo.url
+        except Exception:
+            pass
+        return None
 
     class Meta:
         model = University
