@@ -1,11 +1,18 @@
 from django.contrib import admin
 from .models import University, StudentUniversity, UniversityCampus
+from django.utils.html import format_html
 
 @admin.register(University)
 class UniversityAdmin(admin.ModelAdmin):
-    list_display = ('name', 'abbreviation', 'address', 'created_at', 'updated_at')
+    list_display = ('name', 'abbreviation', 'address', 'logo_preview', 'created_at', 'updated_at')
     search_fields = ('name', 'abbreviation', 'address')
     list_filter = ('created_at',)
+
+    def logo_preview(self, obj):
+        if obj.logo:
+            return format_html('<img src="{}" style="height:30px;object-fit:contain;"/>', obj.logo)
+        return ''
+    logo_preview.short_description = 'Logo'
 
 
 @admin.register(StudentUniversity)

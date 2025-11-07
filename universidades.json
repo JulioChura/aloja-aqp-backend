@@ -1,0 +1,109 @@
+{
+  "universidades_arequipa": [
+    {
+      "universidad": "Universidad Nacional de San Agustín (UNSA)",
+      "sedes": [
+        {
+          "nombre": "Campus Central",
+          "direccion": "Calle Santa Catalina 117, Cercado",
+          "latitud": -16.3989,
+          "longitud": -71.5350
+        },
+        {
+          "nombre": "Sede de Ingenierías",
+          "direccion": "Av. Independencia s/n, Cercado",
+          "latitud": -16.4050,
+          "longitud": -71.5389
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad Católica de Santa María (UCSM)",
+      "sedes": [
+        {
+          "nombre": "Campus Principal",
+          "direccion": "Urb. San José s/n, Umacollo",
+          "latitud": -16.3897,
+          "longitud": -71.5344
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad Católica San Pablo (UCSP)",
+      "sedes": [
+        {
+          "nombre": "Campus Campiña Paisajista",
+          "direccion": "Quinta Vivanco s/n, Urb. Campiña Paisajista",
+          "latitud": -16.3761,
+          "longitud": -71.5392
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad La Salle",
+      "sedes": [
+        {
+          "nombre": "Campus Principal",
+          "direccion": "Av. La Salle 431, Cercado",
+          "latitud": -16.3928,
+          "longitud": -71.5283
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad Tecnológica del Perú (UTP)",
+      "sedes": [
+        {
+          "nombre": "Sede Arequipa",
+          "direccion": "Av. Tacna y Arica 160, Cercado",
+          "latitud": -16.3964,
+          "longitud": -71.5342
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad Privada de Ciencias Aplicadas (UPC)",
+      "sedes": [
+        {
+          "nombre": "Campus Arequipa",
+          "direccion": "Av. Porongoche 101, Cerro Colorado",
+          "latitud": -16.3650,
+          "longitud": -71.5208
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad Continental",
+      "sedes": [
+        {
+          "nombre": "Sede Arequipa",
+          "direccion": "Calle Sucre 205, Cercado",
+          "latitud": -16.4006,
+          "longitud": -71.5361
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad Autónoma San Francisco",
+      "sedes": [
+        {
+          "nombre": "Campus Principal",
+          "direccion": "Calle Consuelo 402, Cercado",
+          "latitud": -16.3950,
+          "longitud": -71.5328
+        }
+      ]
+    },
+    {
+      "universidad": "Universidad José María Arguedas",
+      "sedes": [
+        {
+          "nombre": "Sede Central",
+          "direccion": "Av. Ejército 408, Cercado",
+          "latitud": -16.4033,
+          "longitud": -71.5400
+        }
+      ]
+    }
+  ]
+}

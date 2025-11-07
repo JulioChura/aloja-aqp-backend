@@ -1,9 +1,16 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
+
+# NOTE: This project uses Cloudinary to store uploaded media.
+# Configure Cloudinary credentials via environment variables (e.g. CLOUDINARY_URL)
+# and set up `django-cloudinary-storage` if needed. The `logo` field below
+# stores the university logo using CloudinaryField (nullable).
 
 class University(models.Model):
     name = models.CharField(max_length=255)
     address = models.CharField(max_length=255)
     abbreviation = models.CharField(max_length=50, unique=True)
+    logo = CloudinaryField('logo', blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
