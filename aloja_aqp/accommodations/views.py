@@ -123,6 +123,71 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
             return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(qs, many=True, context={'request': request})
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], url_path='debug/campus-info')
+    def debug_campus_info(self, request):
+        """Temporary diagnostic endpoint.
+
+        Usage: /api/public/accommodations/debug/campus-info/?campus_id=1
+        Returns: universitydistance entries for the campus and related accommodations (with status and key fields)
+        """
+        campus_id = request.GET.get('campus_id')
+        if not campus_id:
+            return Response({'error': 'campus_id parameter is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            cd = UniversityDistance.objects.filter(campus__id=campus_id).select_related('campus', 'accommodation')
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        distances = []
+        ac_ids = []
+        for d in cd:
+            distances.append({
+                'id': d.id,
+                'accommodation_id': d.accommodation.id if d.accommodation_id else None,
+                'campus_id': d.campus.id if d.campus_id else None,
+                'distance_km': str(d.distance_km),
+                'walk_time_minutes': d.walk_time_minutes,
+                'bus_time_minutes': d.bus_time_minutes,
+            })
+            if d.accommodation_id:
+                ac_ids.append(d.accommodation_id)
+
+        accommodations = []
+        if ac_ids:
+            qs = Accommodation.objects.filter(id__in=ac_ids).select_related('status')
+            for a in qs:
+                accommodations.append({
+                    'id': a.id,
+                    'title': a.title,
+                    'monthly_price': str(a.monthly_price),
+                    'rooms': a.rooms,
+                    'status': a.status.name if a.status else None,
+                    'latitude': a.latitude,
+                    'longitude': a.longitude,
+                })
+
+        # include campus coords too
+        campus_info = None
+        try:
+            campus_obj = None
+            from universities.models import UniversityCampus
+            campus_obj = UniversityCampus.objects.filter(id=campus_id).first()
+            if campus_obj:
+                campus_info = {
+                    'id': campus_obj.id,
+                    'name': str(campus_obj),
+                    'latitude': getattr(campus_obj, 'latitude', None),
+                    'longitude': getattr(campus_obj, 'longitude', None),
+                }
+        except Exception:
+            campus_info = None
+
+        return Response({
+            'campus': campus_info,
+            'distances': distances,
+            'accommodations': accommodations,
+        })
  
 
 class AccommodationPhotoViewSet(viewsets.ModelViewSet):
