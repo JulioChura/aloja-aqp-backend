@@ -47,10 +47,45 @@ class AccommodationServiceNestedSerializer(serializers.ModelSerializer):
 
 class UniversityDistanceNestedSerializer(serializers.ModelSerializer):
     campus = serializers.StringRelatedField(read_only=True)
+    campus_id = serializers.SerializerMethodField()
+    campus_university_id = serializers.SerializerMethodField()
+    campus_latitude = serializers.SerializerMethodField()
+    campus_longitude = serializers.SerializerMethodField()
+    route = serializers.SerializerMethodField()
+
+    def get_campus_id(self, obj):
+        return getattr(obj.campus, 'id', None)
+
+    def get_campus_university_id(self, obj):
+        try:
+            return obj.campus.university.id if obj.campus and getattr(obj.campus, 'university', None) else None
+        except Exception:
+            return None
+
+    def get_campus_latitude(self, obj):
+        return getattr(obj.campus, 'latitude', None)
+
+    def get_campus_longitude(self, obj):
+        return getattr(obj.campus, 'longitude', None)
+
+    def get_route(self, obj):
+        """Return route GeoJSON only when the serializer context requests it for a specific university."""
+        selected_university_id = self.context.get('selected_university_id')
+        try:
+            campus_univ_id = obj.campus.university.id if obj.campus and getattr(obj.campus, 'university', None) else None
+        except Exception:
+            campus_univ_id = None
+        if selected_university_id and campus_univ_id and int(selected_university_id) == int(campus_univ_id):
+            return obj.route
+        # by default do not expose route to keep payload small
+        return None
 
     class Meta:
         model = UniversityDistance
-        fields = ['id', 'campus', 'distance_km', 'walk_time_minutes', 'bus_time_minutes', 'route']
+        fields = [
+            'id', 'campus', 'campus_id', 'campus_university_id', 'campus_latitude', 'campus_longitude',
+            'distance_km', 'walk_time_minutes', 'bus_time_minutes', 'route'
+        ]
         
 class AccommodationNearbyPlaceNestedSerializer(serializers.ModelSerializer):
     point_of_interest = serializers.StringRelatedField(read_only=True)
@@ -77,7 +112,10 @@ class FavoriteNestedSerializer(serializers.ModelSerializer):
 class AccommodationSerializer(serializers.ModelSerializer):
     photos = AccommodationPhotoNestedSerializer(many=True, read_only=True)
     services = AccommodationServiceNestedSerializer(many=True, read_only=True)
-    university_distances = UniversityDistanceNestedSerializer(many=True, read_only=True)
+    # The model does not define a related_name on UniversityDistance.accommodation,
+    # so the reverse accessor is `universitydistance_set`. Use `source` so the
+    # field is serialized as `university_distances` (frontend expects this key).
+    university_distances = UniversityDistanceNestedSerializer(many=True, read_only=True, source='universitydistance_set')
     nearby_places = AccommodationNearbyPlaceNestedSerializer(many=True, read_only=True)
     reviews = ReviewNestedSerializer(many=True, read_only=True)
     favorites = FavoriteNestedSerializer(many=True, read_only=True)

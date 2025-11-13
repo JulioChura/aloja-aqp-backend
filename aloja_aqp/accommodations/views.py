@@ -9,6 +9,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from django.db.models import Count, Q
 from decimal import Decimal
+from django.db.models import Min
 
 
 #  Datos de referencia 
@@ -76,6 +77,7 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
             # available lookups include 'universitydistance' (see FieldError choices)
             qs = qs.filter(universitydistance__campus__id=campus_id)
         elif university_id:
+            # filter accommodations that have a distance entry to any campus of the university
             qs = qs.filter(universitydistance__campus__university__id=university_id)
 
         # price range
@@ -117,11 +119,27 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
                 pass
 
         qs = qs.distinct()
+        # Ordering: if a university is selected, order by the minimum distance to that university's campuses
+        if university_id:
+            try:
+                qs = qs.annotate(
+                    min_distance=Min('universitydistance__distance_km', filter=Q(universitydistance__campus__university__id=university_id))
+                ).order_by('min_distance', 'monthly_price')
+            except Exception:
+                # fallback to default ordering
+                qs = qs.order_by('monthly_price')
+        else:
+            # default ordering: by monthly price ascending
+            qs = qs.order_by('monthly_price')
         page = self.paginate_queryset(qs)
+        serializer_context = {'request': request}
+        if university_id:
+            serializer_context['selected_university_id'] = university_id
+
         if page is not None:
-            serializer = self.get_serializer(page, many=True, context={'request': request})
+            serializer = self.get_serializer(page, many=True, context=serializer_context)
             return self.get_paginated_response(serializer.data)
-        serializer = self.get_serializer(qs, many=True, context={'request': request})
+        serializer = self.get_serializer(qs, many=True, context=serializer_context)
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], url_path='debug/campus-info')
