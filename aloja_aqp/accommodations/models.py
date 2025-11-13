@@ -75,6 +75,8 @@ class UniversityDistance(models.Model):
     distance_km = models.DecimalField(max_digits=6, decimal_places=2)
     walk_time_minutes = models.IntegerField(null=True, blank=True)
     bus_time_minutes = models.IntegerField(null=True, blank=True)
+    # GeoJSON route returned by Mapbox (LineString). Stored as JSON to avoid PostGIS dependency.
+    route = models.JSONField(null=True, blank=True)
 
     class Meta:
         unique_together = ("accommodation", "campus")

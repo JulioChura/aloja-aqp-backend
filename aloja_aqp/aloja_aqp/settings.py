@@ -209,6 +209,9 @@ LOGOUT_REDIRECT_URL = "/"
 
 API_KEY = config('DECOLECTA_API_KEY')
 
+# Mapbox token (used by accommodations.utils.routing.mapbox_route)
+MAPBOX_ACCESS_TOKEN = config('MAPBOX_ACCESS_TOKEN')
+
 CORS_ALLOW_ALL_ORIGINS = True
 
 SIMPLE_JWT = {

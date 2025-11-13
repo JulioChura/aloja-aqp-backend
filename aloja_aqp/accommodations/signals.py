@@ -65,6 +65,7 @@ def calcular_distancias_universidad_al_guardar(sender, instance, created, **kwar
                 defaults={
                     'distance_km': distancia_km,
                     'walk_time_minutes': minutos_a_pie,
+                    'route': resultado_ruta.get('geometry'),
                 }
             )
             logger.info('UniversityDistance guardado para accommodation=%s campus=%s distance_km=%s walk_min=%s', instance.id, getattr(campus, 'id', None), distancia_km, minutos_a_pie)

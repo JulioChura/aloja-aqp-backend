@@ -50,7 +50,7 @@ class UniversityDistanceNestedSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UniversityDistance
-        fields = ['id', 'campus', 'distance_km', 'walk_time_minutes', 'bus_time_minutes']
+        fields = ['id', 'campus', 'distance_km', 'walk_time_minutes', 'bus_time_minutes', 'route']
         
 class AccommodationNearbyPlaceNestedSerializer(serializers.ModelSerializer):
     point_of_interest = serializers.StringRelatedField(read_only=True)
