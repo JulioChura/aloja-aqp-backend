@@ -1,6 +1,9 @@
 from django.conf import settings
 import requests
 from decimal import Decimal
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def mapbox_route(lat1, lon1, lat2, lon2, profile='driving'):
@@ -24,9 +27,26 @@ def mapbox_route(lat1, lon1, lat2, lon2, profile='driving'):
         'geometries': 'geojson',
         'annotations': 'distance,duration'
     }
+    # Log the request url for debugging but avoid printing the token
+    try:
+        safe_params = {k: v for k, v in params.items() if k != 'access_token'}
+        logger.info('Mapbox request prepared - profile=%s coords=%s params=%s', profile, coords, safe_params)
+    except Exception:
+        # don't break on logging issues
+        pass
 
-    resp = requests.get(url, params=params, timeout=12)
+    try:
+        resp = requests.get(url, params=params, timeout=12)
+    except Exception as e:
+        logger.exception('Error realizando request a Mapbox: %s', str(e))
+        raise
     resp.raise_for_status()
+    # Log response status for debugging
+    try:
+        logger.info('Mapbox response status: %s for profile=%s coords=%s', resp.status_code, profile, coords)
+    except Exception:
+        pass
+
     data = resp.json()
     if not data or data.get('code') != 'Ok' or not data.get('routes'):
         return None
