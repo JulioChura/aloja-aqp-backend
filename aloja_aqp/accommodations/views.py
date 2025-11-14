@@ -10,6 +10,7 @@ from rest_framework.decorators import action
 from django.db.models import Count, Q
 from decimal import Decimal
 from django.db.models import Min
+from rest_framework.pagination import PageNumberPagination
 
 
 #  Datos de referencia 
@@ -31,6 +32,10 @@ class PredefinedServiceViewSet(viewsets.ReadOnlyModelViewSet):
 #  Alojamiento 
 class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AccommodationSerializer
+    # Paginate only this viewset: 10 items per page
+    class TenPerPagePagination(PageNumberPagination):
+        page_size = 10
+    pagination_class = TenPerPagePagination
     permission_classes = [permissions.AllowAny]
     
     def get_queryset(self):
