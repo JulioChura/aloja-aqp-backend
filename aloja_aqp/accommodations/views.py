@@ -301,6 +301,42 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         if not hasattr(user, 'student_profile'):
             raise PermissionDenied("Solo estudiantes pueden agregar favoritos")
         serializer.save(student=user.student_profile)
+    
+    def create(self, request, *args, **kwargs):
+        """Create favorite but make operation idempotent: if favorite exists, return it instead of raising DB error."""
+        user = request.user
+        if not hasattr(user, 'student_profile'):
+            raise PermissionDenied("Solo estudiantes pueden agregar favoritos")
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        accommodation = serializer.validated_data.get('accommodation')
+        if accommodation is None:
+            return Response({'detail': 'accommodation is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # check existing
+        existing = Favorite.objects.filter(student=user.student_profile, accommodation=accommodation).first()
+        if existing:
+            existing_serialized = self.get_serializer(existing)
+            return Response(existing_serialized.data, status=status.HTTP_200_OK)
+
+        # not existing: create
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def destroy(self, request, *args, **kwargs):
+        """Ensure students can only delete their own favorites. Return 404 if not found."""
+        user = request.user
+        if not hasattr(user, 'student_profile'):
+            raise PermissionDenied("Solo estudiantes pueden quitar favoritos")
+
+        pk = kwargs.get('pk')
+        fav = Favorite.objects.filter(pk=pk, student=user.student_profile).first()
+        if not fav:
+            return Response({'detail': 'Not found.'}, status=status.HTTP_404_NOT_FOUND)
+        fav.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 """ 
