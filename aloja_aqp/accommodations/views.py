@@ -34,7 +34,7 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = AccommodationSerializer
     # Paginate only this viewset: 10 items per page
     class TenPerPagePagination(PageNumberPagination):
-        page_size = 10
+        page_size = 6
     pagination_class = TenPerPagePagination
     permission_classes = [permissions.AllowAny]
     
