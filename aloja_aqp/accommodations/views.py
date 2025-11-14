@@ -42,6 +42,16 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
         # Filtra solo los alojamientos con estado "published"
         return Accommodation.objects.filter(status__name__iexact="published").select_related('owner', 'accommodation_type')
 
+    def get_serializer_context(self):
+        """Include selected_university_id from query params in serializer context so
+        individual detail requests can opt-in to include route GeoJSON.
+        """
+        context = super().get_serializer_context()
+        university_id = self.request.query_params.get('university_id')
+        if university_id:
+            context['selected_university_id'] = university_id
+        return context
+
     @action(detail=False, methods=['get'], url_path='autocomplete')
     def autocomplete(self, request):
         q = request.GET.get('q', '').strip()
