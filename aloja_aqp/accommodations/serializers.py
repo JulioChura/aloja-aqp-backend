@@ -10,6 +10,7 @@ from universities.models import University, UniversityCampus
 from points.models import PointOfInterest
 from users.serializers import OwnerProfileSerializer
 from users.serializers import UserSerializer
+import bleach
 
 #  SERIALIZERS DE DATOS DE REFERENCIA 
 class AccommodationStatusSerializer(serializers.ModelSerializer):
@@ -126,6 +127,29 @@ class AccommodationSerializer(serializers.ModelSerializer):
         model = Accommodation
         fields = '__all__'
         read_only_fields = ['owner', 'publication_date', 'created_at', 'updated_at']
+
+    def validate_coexistence_rules(self, value):
+        """Sanitize HTML submitted for coexistence_rules to prevent XSS.
+
+        We allow a small set of tags helpful for formatting (paragraphs, lists,
+        bold/italic, links). Any other tags/attributes will be stripped.
+        """
+        if not value:
+            return value
+        ALLOWED_TAGS = ['p', 'br', 'ul', 'ol', 'li', 'strong', 'em', 'a', 'b', 'i', 'u']
+        ALLOWED_ATTRS = {
+            'a': ['href', 'rel', 'target'],
+        }
+        cleaned = bleach.clean(value, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+        # Ensure links are linkified. Avoid using bleach.linkifier.Callbacks for
+        # compatibility across bleach versions; call linkify without callbacks.
+        if hasattr(bleach, 'linkify'):
+            try:
+                cleaned = bleach.linkify(cleaned)
+            except Exception:
+                # If linkify fails for any reason, fall back to the cleaned text
+                pass
+        return cleaned
 
 #  OTROS SERIALIZERS SIMPLES 
 class PhotoSerializer(serializers.Serializer):
