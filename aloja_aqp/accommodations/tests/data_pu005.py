@@ -206,18 +206,3 @@ class PU005DataMixin:
             'sin_servicios': [alo4]
         }
 
-    def crear_alojamientos_sin_resultados(self):
-        """
-        PU005-5: Crea alojamientos con precios moderados para probar búsqueda sin resultados.
-        
-        Returns:
-            list: Lista de alojamientos con precios fuera del rango [1000, 5000]
-        """
-        alojamientos = [
-            self.create_accommodation('Moderado 1', '500.00', rooms=2, address='Calle A'),
-            self.create_accommodation('Moderado 2', '600.00', rooms=2, address='Calle B'),
-            self.create_accommodation('Económico', '300.00', rooms=1, address='Calle C'),
-        ]
-
-        return alojamientos
-

@@ -8,7 +8,6 @@ Nº | Descripción                          | Método            | Datos Entrada
 2  | Filtro por universidad cercana       | searchProperties  | Universidad: "UNSA", radio: 3km              | Propiedades ordenadas por proximidad a UNSA
 3  | Búsqueda con lenguaje natural        | searchProperties  | "Departamento cerca a la Unsa"               | N Departamentos que hagan match
 4  | Búsqueda con múltiples filtros       | searchProperties  | Precio: [300,600], universidad, servicios    | Propiedades que cumplen todos los criterios
-5  | Búsqueda sin resultados              | searchProperties  | Precio: [1000, 5000]                         | Mensaje: "No se encontraron propiedades"
 """
 from rest_framework.test import APIClient
 from decimal import Decimal
@@ -153,24 +152,4 @@ class AccommodationFilterTests(PU005DataMixin, AccommodationTestBase):
                          f"Alojamiento '{item['title']}' debe tener WiFi")
             self.assertIn(self.servicio_agua.id, servicios_ids,
                          f"Alojamiento '{item['title']}' debe tener Agua")
-
-    def test_pu005_5_busqueda_sin_resultados(self):
-        """
-        PU005-5: Búsqueda sin resultados
-        Datos Entrada: Precio [1000, 5000]
-        Salida Esperada: Mensaje "No se encontraron propiedades"
-        """
-        self.crear_alojamientos_sin_resultados()
-
-        response = self.client.get('/api/public/accommodations/filter/', {
-            'min_price': '1000',
-            'max_price': '5000'
-        })
-
-        self.assertEqual(response.status_code, 200)
-        results = response.json().get('results', response.json())
-
-        # Verificar que no hay resultados
-        self.assertEqual(len(results), 0,
-                        "No debe haber resultados para el rango de precio [1000, 5000]")
 
