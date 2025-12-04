@@ -28,7 +28,6 @@ class AccommodationManagementTests(APITestCase):
         )
 
         # --- 3. CREACIÓN DE UNIVERSIDAD (Para pruebas de distancia) ---
-        # CORRECCIÓN: Borramos 'acronym="UNSA"' porque ese campo no existe en tu modelo
         self.uni = University.objects.create(name="UNSA") 
         
         self.campus = UniversityCampus.objects.create(
@@ -88,7 +87,7 @@ class AccommodationManagementTests(APITestCase):
             status=self.status_draft
         )
 
-        # Llamamos a la "Action" personalizada 'publish' definida en tu ViewSet
+        # Llamamos a la "Action" personalizada 'publish' definida en la ViewSet
         # URL típica: /api/accommodations/{id}/publish/
         url = reverse('accommodation-publish', kwargs={'pk': acc.id})
         
@@ -201,7 +200,7 @@ class FavoriteManagementTests(APITestCase):
         # Intentamos crearlo de nuevo
         resp = self.client.post(url, data, format='json')
 
-        # Tu view dice: if existing: return Response(..., status=200)
+        # la view dice: if existing: return Response(..., status=200)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         
         # Verificar que NO se duplicó el registro (count debe seguir siendo 1)
@@ -313,7 +312,7 @@ class SearchAndStateTests(APITestCase):
         # Endpoint: /api/public/accommodations/filter/
         url = reverse('public-accommodations-filter-accommodations') 
         
-        # Filtramos entre 200 y 500. Debería salir el barato (300) pero NO el caro (800)
+        # Filtramos entre 200 y 500. Debería salir el barato (300) pero no el caro (800)
         resp = self.client.get(url, {'min_price': 200, 'max_price': 500})
         
         self.assertEqual(resp.status_code, 200)
@@ -408,7 +407,7 @@ class SearchAndStateTests(APITestCase):
         self.acc_cheap.refresh_from_db()
         self.assertEqual(self.acc_cheap.status.name, 'deleted')
         
-        # Verificar que el dueño YA NO lo ve en su lista general (tu get_queryset excluye deleted)
+        # Verificar que el dueño YA NO lo ve en su lista general (la get_queryset excluye deleted)
         list_url = reverse('accommodation-list')
         resp_list = self.client.get(list_url)
         ids = [a['id'] for a in resp_list.data]
