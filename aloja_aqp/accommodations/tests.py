@@ -42,7 +42,12 @@ class AccommodationManagementTests(APITestCase):
         PU003-1: Creación exitosa de anuncio.
         Resultado esperado: Status 201 y estado del anuncio 'draft'.
         """
+        print("\n" + "="*70)
+        print("PU003-1: CREAR ANUNCIO EN DRAFT")
+        print("="*70)
+        
         # Autenticamos como propietario
+        print(f"\n[SETUP] Autenticando propietario: {self.owner_user.email}")
         self.client.force_authenticate(user=self.owner_user)
 
         url = reverse('accommodation-list') # /api/accommodations/
@@ -58,18 +63,33 @@ class AccommodationManagementTests(APITestCase):
             'rooms': 1
         }
 
+        print(f"\n[INPUT] Datos del anuncio:")
+        print(f"  - Título: {data['title']}")
+        print(f"  - Precio mensual: S/. {data['monthly_price']}")
+        print(f"  - Tipo: {self.type_apartment.name}")
+        print(f"  - Dirección: {data['address']}")
+        print(f"\n[EXPECTED] Status: 201 CREATED, Estado: 'draft'")
+
         # --- EJECUCIÓN ---
         resp = self.client.post(url, data, format='json')
 
         # --- VERIFICACIÓN ---
+        print(f"\n[RESULT] Status: {resp.status_code}")
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         self.assertEqual(resp.data['title'], 'Habitación cerca a la UNSA')
         
         # Verificar en BD que el estado se asignó automáticamente a "draft"
-        # (Lógica definida en tu perform_create)
         acc = Accommodation.objects.get(id=resp.data['id'])
+        print(f"[RESULT] Anuncio creado:")
+        print(f"  - ID: {acc.id}")
+        print(f"  - Estado: {acc.status.name}")
+        print(f"  - Propietario: {acc.owner.user.email}")
+        
         self.assertEqual(acc.status.name, 'draft', "El estado inicial debe ser draft")
         self.assertEqual(acc.owner, self.owner_profile, "El dueño debe ser el usuario logueado")
+        
+        print("\n✓ TEST EXITOSO")
+        print("="*70)
 
     def test_publish_accommodation(self):
         """
@@ -77,40 +97,65 @@ class AccommodationManagementTests(APITestCase):
         Prerrequisito: Tener un anuncio en 'draft'.
         Resultado esperado: Status 200 y cambio de estado a 'published'.
         """
+        print("\n" + "="*70)
+        print("PU003-2: PUBLICAR ANUNCIO")
+        print("="*70)
+        
+        print(f"\n[SETUP] Autenticando propietario: {self.owner_user.email}")
         self.client.force_authenticate(user=self.owner_user)
 
         # Creamos un alojamiento previo en estado draft
+        print(f"\n[SETUP] Creando anuncio en estado DRAFT...")
         acc = Accommodation.objects.create(
             owner=self.owner_profile,
             title="Borrador",
             monthly_price=100,
             status=self.status_draft
         )
+        print(f"  - ID: {acc.id}")
+        print(f"  - Título: {acc.title}")
+        print(f"  - Estado inicial: {acc.status.name}")
 
         # Llamamos a la "Action" personalizada 'publish' definida en la ViewSet
         # URL típica: /api/accommodations/{id}/publish/
         url = reverse('accommodation-publish', kwargs={'pk': acc.id})
         
+        print(f"\n[INPUT] POST a {url}")
+        print(f"[EXPECTED] Status: 200 OK, Estado: 'published'")
+        
         # --- EJECUCIÓN ---
         resp = self.client.post(url)
 
         # --- VERIFICACIÓN ---
+        print(f"\n[RESULT] Status: {resp.status_code}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         
         acc.refresh_from_db() # Recargamos desde BD
+        print(f"[RESULT] Estado actualizado: {acc.status.name}")
         self.assertEqual(acc.status.name, 'published', "El estado debió cambiar a published")
+        
+        print("\n✓ TEST EXITOSO: Anuncio publicado correctamente")
+        print("="*70)
 
     def test_save_calculated_distances(self):
         """
         PU003-4: Guardado de distancias a universidades (Bulk).
         Nota: El backend NO calcula, recibe el cálculo del frontend y lo guarda.
         """
+        print("\n" + "="*70)
+        print("PU003-4: GUARDAR DISTANCIAS A UNIVERSIDADES (BULK)")
+        print("="*70)
+        
+        print(f"\n[SETUP] Autenticando propietario: {self.owner_user.email}")
         self.client.force_authenticate(user=self.owner_user)
         
         # Creamos el alojamiento
+        print(f"\n[SETUP] Creando alojamiento...")
         acc = Accommodation.objects.create(
             owner=self.owner_profile, title="Casa", monthly_price=500, status=self.status_draft
         )
+        print(f"  - ID Anuncio: {acc.id}")
+        print(f"  - Título: {acc.title}")
 
         url = reverse('university-distances-bulk') # /api/university-distances/bulk/
         
@@ -127,15 +172,31 @@ class AccommodationManagementTests(APITestCase):
             ]
         }
 
+        print(f"\n[INPUT] Guardando distancias:")
+        print(f"  - Campus: {self.campus.name} (ID: {self.campus.id})")
+        print(f"  - Distancia: {payload['distances'][0]['distance_km']} km")
+        print(f"  - Tiempo caminando: {payload['distances'][0]['walk_time_minutes']} min")
+        print(f"  - Tiempo en bus: {payload['distances'][0]['bus_time_minutes']} min")
+        print(f"\n[EXPECTED] Status: 201 CREATED, Registro en BD")
+
         # --- EJECUCIÓN ---
         resp = self.client.post(url, payload, format='json')
 
         # --- VERIFICACIÓN ---
+        print(f"\n[RESULT] Status: {resp.status_code}")
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
         
         # Verificar que se guardó en la tabla intermedia
         exists = UniversityDistance.objects.filter(accommodation=acc, campus=self.campus).exists()
         self.assertTrue(exists, "La distancia debió guardarse en la BD")
+        
+        distance_obj = UniversityDistance.objects.get(accommodation=acc, campus=self.campus)
+        print(f"[RESULT] Distancia guardada en BD:")
+        print(f"  - ID: {distance_obj.id}")
+        print(f"  - Distancia: {distance_obj.distance_km} km")
+        
+        print("\n✓ TEST EXITOSO: Distancias guardadas correctamente")
+        print("="*70)
 
 
 class FavoriteManagementTests(APITestCase):

@@ -132,11 +132,19 @@ class IntegrationOwnerAccommodationTests(APITestCase):
         2. Intentar crear anuncio
         3. Verificar que falla (lanza RelatedObjectDoesNotExist)
         """
+        print("\n" + "="*70)
+        print("INTEGRACIÓN 2: NO SE PUEDE CREAR ANUNCIO SIN OWNERPROFILE")
+        print("="*70)
+        
         # --- PASO 1: Crear usuario base sin OwnerProfile ---
+        print("\n[PASO 1] Creando usuario SIN OwnerProfile...")
         user = User.objects.create_user(email='usuario@test.com', password='password123')
         self.client.force_authenticate(user=user)
+        print(f"✓ Usuario creado: {user.email}")
+        print("✗ NO tiene OwnerProfile")
 
         # --- PASO 2: Intentar crear anuncio sin ser propietario ---
+        print("\n[PASO 2] Intentando crear anuncio sin OwnerProfile...")
         accommodation_url = reverse('accommodation-list')
         accommodation_data = {
             'title': 'Habitación sin permiso',
@@ -148,6 +156,8 @@ class IntegrationOwnerAccommodationTests(APITestCase):
             'monthly_price': '350.00',
             'rooms': 1
         }
+        print(f"Datos de entrada: {accommodation_data['title']}")
+        print("Esperado: Lanzar excepción (RelatedObjectDoesNotExist)")
 
         # --- VERIFICACIÓN ---
         # Esperamos que lance una excepción porque el usuario NO tiene owner_profile
@@ -155,8 +165,13 @@ class IntegrationOwnerAccommodationTests(APITestCase):
         with self.assertRaises(Exception):
             resp = self.client.post(accommodation_url, accommodation_data, format='json')
         
+        print("Resultado: ✓ Excepción lanzada correctamente")
+        
         # Verificar que NO se creó anuncio
         self.assertEqual(Accommodation.objects.filter(title='Habitación sin permiso').count(), 0)
+        print("✓ Anuncio NO fue creado (0 registros en BD)")
+        print("\n✓ TEST EXITOSO: Se previene creación sin OwnerProfile")
+        print("="*70)
 
     def test_integration_cannot_publish_without_owner_profile(self):
         """
