@@ -1,4 +1,4 @@
-# accommodations/serializers.py
+## Archivo: accommodations/serializers.py
 from rest_framework import serializers
 from .models import (
     AccommodationStatus, AccommodationType, Accommodation, AccommodationPhoto,
@@ -12,7 +12,7 @@ from users.serializers import OwnerProfileSerializer
 from users.serializers import UserSerializer
 import bleach
 
-#  SERIALIZERS DE DATOS DE REFERENCIA 
+## Serializers de datos de referencia
 class AccommodationStatusSerializer(serializers.ModelSerializer):
     class Meta:
         model = AccommodationStatus
@@ -28,7 +28,7 @@ class PredefinedServiceSerializer(serializers.ModelSerializer):
         model = PredefinedService
         fields = '__all__'
 
-#  NESTED SERIALIZERS 
+## Serializers anidados
 class AccommodationPhotoNestedSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
     class Meta:
@@ -36,7 +36,7 @@ class AccommodationPhotoNestedSerializer(serializers.ModelSerializer):
         fields = ['id', 'image', 'order_num', 'is_main']
     def get_image(self, obj):
         if obj.image:
-            return obj.image.url  # Cloudinary ya devuelve la URL completa
+            return obj.image.url  # Cloudinary devuelve la URL completa
         return None
 
 class AccommodationServiceNestedSerializer(serializers.ModelSerializer):
@@ -78,7 +78,7 @@ class UniversityDistanceNestedSerializer(serializers.ModelSerializer):
             campus_univ_id = None
         if selected_university_id and campus_univ_id and int(selected_university_id) == int(campus_univ_id):
             return obj.route
-        # by default do not expose route to keep payload small
+        # No exponer la ruta por defecto para mantener el payload pequeño
         return None
 
     class Meta:
@@ -109,13 +109,11 @@ class FavoriteNestedSerializer(serializers.ModelSerializer):
         model = Favorite
         fields = ['id', 'student', 'date_added']
 
-#  SERIALIZER PRINCIPAL 
+## Serializer principal
 class AccommodationSerializer(serializers.ModelSerializer):
     photos = AccommodationPhotoNestedSerializer(many=True, read_only=True)
     services = AccommodationServiceNestedSerializer(many=True, read_only=True)
-    # The model does not define a related_name on UniversityDistance.accommodation,
-    # so the reverse accessor is `universitydistance_set`. Use `source` so the
-    # field is serialized as `university_distances` (frontend expects this key).
+    # El modelo no define related_name en UniversityDistance.accommodation, por eso se usa universitydistance_set y source para que el frontend reciba la clave esperada.
     university_distances = UniversityDistanceNestedSerializer(many=True, read_only=True, source='universitydistance_set')
     nearby_places = AccommodationNearbyPlaceNestedSerializer(many=True, read_only=True)
     reviews = ReviewNestedSerializer(many=True, read_only=True)
@@ -141,17 +139,14 @@ class AccommodationSerializer(serializers.ModelSerializer):
             'a': ['href', 'rel', 'target'],
         }
         cleaned = bleach.clean(value, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
-        # Ensure links are linkified. Avoid using bleach.linkifier.Callbacks for
-        # compatibility across bleach versions; call linkify without callbacks.
         if hasattr(bleach, 'linkify'):
             try:
                 cleaned = bleach.linkify(cleaned)
             except Exception:
-                # If linkify fails for any reason, fall back to the cleaned text
-                pass
+                pass  # Si linkify falla, se usa el texto limpio
         return cleaned
 
-#  OTROS SERIALIZERS SIMPLES 
+## Otros serializers simples
 class PhotoSerializer(serializers.Serializer):
     image = serializers.CharField()
     order_num = serializers.IntegerField()
