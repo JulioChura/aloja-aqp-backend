@@ -7,9 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import action
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Min, Max
 from decimal import Decimal
-from django.db.models import Min
 from rest_framework.pagination import PageNumberPagination
 
 
@@ -78,6 +77,11 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
     @action(detail=False, methods=['get'], url_path='filter')
     def filter_accommodations(self, request):
         qs = self.get_queryset()
+
+        # Calcular el precio mínimo y máximo global (sin filtros de precio)
+        global_price_qs = self.get_queryset()
+        global_min_price = global_price_qs.aggregate(min_price=Min('monthly_price'))['min_price']
+        global_max_price = global_price_qs.aggregate(max_price=Max('monthly_price'))['max_price']
         # full-text like filters
         q = request.GET.get('q')
         if q:
@@ -153,9 +157,18 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
 
         if page is not None:
             serializer = self.get_serializer(page, many=True, context=serializer_context)
-            return self.get_paginated_response(serializer.data)
+            paginated_response = self.get_paginated_response(serializer.data)
+            # Agregar los campos de precio global a la respuesta paginada
+            if hasattr(paginated_response, 'data') and isinstance(paginated_response.data, dict):
+                paginated_response.data['global_min_price'] = str(global_min_price) if global_min_price is not None else None
+                paginated_response.data['global_max_price'] = str(global_max_price) if global_max_price is not None else None
+            return paginated_response
         serializer = self.get_serializer(qs, many=True, context=serializer_context)
-        return Response(serializer.data)
+        return Response({
+            'results': serializer.data,
+            'global_min_price': str(global_min_price) if global_min_price is not None else None,
+            'global_max_price': str(global_max_price) if global_max_price is not None else None,
+        })
 
     @action(detail=False, methods=['get'], url_path='debug/campus-info')
     def debug_campus_info(self, request):
