@@ -101,6 +101,15 @@ class PublicAccommodationViewSet(viewsets.ReadOnlyModelViewSet):
             # filter accommodations that have a distance entry to any campus of the university
             qs = qs.filter(universitydistance__campus__university__id=university_id)
 
+
+        # filtro por tipo de alojamiento
+        accommodation_type = request.GET.get('accommodation_type')
+        if accommodation_type:
+            try:
+                qs = qs.filter(accommodation_type=accommodation_type)
+            except Exception:
+                pass
+
         # price range
         min_price = request.GET.get('min_price')
         max_price = request.GET.get('max_price')
