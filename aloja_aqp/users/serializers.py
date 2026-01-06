@@ -28,14 +28,18 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
         child=serializers.IntegerField(), write_only=True, required=False
     )  # ahora enviamos sedes
     phone_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
+    career = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    gender = serializers.CharField(required=False, allow_blank=True, max_length=1)
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'first_name', 'last_name','campuses', 'phone_number']
+        fields = ['email', 'password', 'first_name', 'last_name', 'campuses', 'phone_number', 'career', 'gender']
 
     def create(self, validated_data):
         campuses_data = validated_data.pop('campuses', [])
         phone_number = validated_data.pop('phone_number', '')
+        career = validated_data.pop('career', '')
+        gender = validated_data.pop('gender', '')
 
         user = User.objects.create_user(
             email=validated_data['email'],
@@ -52,6 +56,8 @@ class StudentRegistrationSerializer(serializers.ModelSerializer):
         student_profile = StudentProfile.objects.create(
             user=user,
             phone_number=phone_number,
+            career=career,
+            gender=gender,
             status=active_status
         )
 
