@@ -2,6 +2,7 @@
 from rest_framework import routers
 from django.urls import path, include
 from .views import *
+from .views import ReverseGeocodeAPIView
 
 router = routers.DefaultRouter()
 router.register(r'accommodation-status', AccommodationStatusViewSet)
@@ -22,4 +23,5 @@ urlpatterns = [
     path('api/university-distances/bulk/', UniversityDistanceBulkCreateView.as_view(), name='university-distances-bulk'),
     path('api/accommodation-nearby-places/bulk/', AccommodationNearbyPlaceBulkCreateView.as_view(), name='accommodation-nearby-places-bulk'),
     path('api/', include(router.urls)),
+    path('api/reverse-geocode', ReverseGeocodeAPIView.as_view(), name='reverse-geocode'),
 ]

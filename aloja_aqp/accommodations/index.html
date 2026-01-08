@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Seleccionar dirección en el mapa</title>
+
+  <!-- Leaflet CSS -->
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+
+    #map {
+      height: 400px;
+      width: 100%;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .info {
+      background: #f5f5f5;
+      padding: 10px;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📍 Selecciona un lugar en el mapa</h2>
+
+  <div id="map"></div>
+
+  <div class="info">
+    <strong>Dirección seleccionada:</strong>
+    <p id="address">Haz clic en el mapa</p>
+
+    <strong>Coordenadas:</strong>
+    <p id="coords">-</p>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // Inicializar mapa (Arequipa por defecto)
+    const map = L.map("map").setView([-16.3989, -71.535], 13);
+
+    // Capa OpenStreetMap
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+    }).addTo(map);
+
+    let marker = null;
+
+    // Evento click
+    map.on("click", async (e) => {
+      const lat = e.latlng.lat;
+      const lng = e.latlng.lng;
+
+      // Eliminar marcador anterior
+      if (marker) {
+        map.removeLayer(marker);
+      }
+
+      // Nuevo marcador
+      marker = L.marker([lat, lng]).addTo(map);
+
+      // Mostrar coordenadas
+      document.getElementById("coords").innerText =
+        `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+
+      // Obtener dirección
+      const address = await reverseGeocode(lat, lng);
+      document.getElementById("address").innerText = address;
+    });
+
+    // Reverse geocoding con Nominatim
+    async function reverseGeocode(lat, lng) {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.display_name || "Dirección no encontrada";
+      } catch (error) {
+        return "Error obteniendo la dirección";
+      }
+    }
+  </script>
+
+</body>
+</html>

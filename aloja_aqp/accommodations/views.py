@@ -5,6 +5,28 @@ from .serializers import *
 from .permissions import IsOwnerOrReadOnly, IsStudentOrReadOnly,IsAccommodationOwnerOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
+from rest_framework.views import APIView
+import requests
+# Endpoint de reverse geocoding
+class ReverseGeocodeAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        lat = request.GET.get('lat')
+        lon = request.GET.get('lon')
+        if not lat or not lon:
+            return Response({'error': 'lat and lon are required'}, status=400)
+        try:
+            url = f'https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&zoom=18&addressdetails=1'
+            headers = {'User-Agent': 'alojaaqp/1.0'}
+            resp = requests.get(url, headers=headers, timeout=5)
+            if resp.status_code != 200:
+                return Response({'error': 'Nominatim error', 'status': resp.status_code}, status=502)
+            data = resp.json()
+            address = data.get('display_name')
+            return Response({'address': address, 'raw': data})
+        except Exception as e:
+            return Response({'error': str(e)}, status=500)
 from rest_framework import status
 from rest_framework.decorators import action
 from django.db.models import Count, Q, Min, Max
