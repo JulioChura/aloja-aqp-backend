@@ -1,39 +1,103 @@
-# 🏡 Datos Iniciales para la Base de Datos
+# AlojaAQP Backend
 
-Este documento describe los datos que deben agregarse manualmente a las tablas del sistema.
+AlojaAQP is a backend platform built with Django and Django REST Framework for managing university accommodations in Arequipa, Peru. It allows students to search, filter, and book accommodations near universities, and enables property owners to publish and manage their properties.
+
+## Database Diagram
+
+You can view the entity-relationship model of the database in the following image:
+
+![ER Diagram](docs/diagrama_bd.png)
+
+
+## Main Features
+- **Accommodation management**: Publish, edit, hide, and logically delete accommodations.
+- **Advanced search**: Filter by price, rooms, services, proximity to universities/campuses, and text search.
+- **User management**: Registration and authentication for students and owners (with DNI validation via RENIEC and Google Login).
+- **Reviews and favorites**: Students can leave reviews and mark accommodations as favorites.
+- **Services and nearby places**: Link accommodations with available services and nearby points of interest.
+- **Photo uploads to Cloudinary**.
+- **Automatic API documentation** with Swagger and Redoc.
+
+## Folder Structure
+- `accommodations/`: Logic for accommodations, services, distances, photos, reviews, favorites.
+- `users/`: User models and views, student and owner profiles, authentication.
+- `universities/`: Universities and campuses.
+- `core/`: Base for future extensions.
+
+## Main Models
+- **User, OwnerProfile, StudentProfile**: Users and their profiles.
+- **Accommodation, AccommodationType, AccommodationStatus**: Accommodations and their types.
+- **PredefinedService, AccommodationService**: Services available in accommodations.
+- **University, UniversityCampus, UniversityDistance**: Universities, campuses, and distances to accommodations.
+- **Review, Favorite**: Student reviews and favorites.
+
+## Required Environment Variables (`.env`)
+
+You must create a `.env` file in the project root with the following variables:
+
+```env
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+DECOLECTA_API_KEY=your_decolecta_api_key
+MAPBOX_ACCESS_TOKEN=your_mapbox_access_token
+```
+
+Replace the values with your own credentials.
+
+## Local Installation and Execution
+
+### 1. Clone the repository and go to the backend folder
+
+```bash
+cd aloja-aqp-backend/aloja_aqp
+```
+
+### 2. Create and configure the `.env` file
+Copy the `.env.example` file (if it exists) or create a new one with the variables listed above.
+
+### 3. Build and start the services with Docker
+
+```bash
+docker-compose up --build
+```
+This will start:
+- Django backend at http://localhost:8000
+- PostgreSQL database at localhost:5432
+- PgAdmin for database management
+
+### 4. Access the API and documentation
+- Swagger: http://localhost:8000/docs/
+- Redoc: http://localhost:8000/redoc/
+
+## Initial Required Data Load
+
+To ensure the system works correctly, you must load the accommodation publication statuses (draft, published, hidden, deleted). Run the following command:
+
+```bash
+docker-compose exec backend python manage.py cargar_estados_alojamiento
+```
+
+## Useful Commands
+- Migrations: `docker-compose exec backend python manage.py migrate`
+- Create superuser: `docker-compose exec backend python manage.py createsuperuser`
+- Run tests: `docker-compose exec backend pytest`
+
+## Main Dependencies
+See `requirements.txt` for the full list. Notable ones:
+- Django 5.2+
+- djangorestframework
+- djangorestframework-simplejwt
+- django-allauth
+- cloudinary
+- psycopg2-binary
+- celery (for async tasks, if used)
+
+## License
+MIT
 
 ---
 
-## 🛏️ Tabla: `accommodation_types`
-
-| Nombre | Descripción |
-|---------|--------------|
-| **Room** | Un espacio individual dentro de una vivienda o edificio, generalmente con acceso compartido a cocina o baño. Ideal para viajeros solitarios o estancias cortas con un presupuesto más económico. |
-| **Condominio** | Una unidad dentro de un edificio o complejo residencial compartido que ofrece servicios comunes, como piscina, gimnasio o seguridad. Combina la independencia de un departamento con las ventajas de instalaciones compartidas. |
-| **House** | Una vivienda completa e independiente que ofrece mayor espacio, privacidad y comodidades como jardín, garaje o terraza. Perfecta para familias o grupos grandes que desean sentirse como en casa. |
-| **Apartment** | Un espacio privado dentro de un edificio o complejo residencial que cuenta con áreas independientes como sala, cocina, baño y uno o más dormitorios. Ideal para estancias largas o grupos pequeños que buscan comodidad y privacidad. |
-
----
-
-## 🧩 Tabla: `predefined_services`
-
-| Name |Icon class
-|-----------|-----------|
-| Swimming Pool |pool|
-| Parking Available |local_parking|
-| Pet-Friendly |pets|
-| Balcony/Patio |park|
-| Air Conditioning |ac_unit|
-| In-unit Laundry |local_laundry_service|
-| Wi-Fi Included |wifi|
-| Full Kitchen |kitchen|
-
----
-
-## 🎓 Tabla: `university_campuses`
-
-| Nombre | Universidad | Dirección | Latitud | Longitud |
-|---------|--------------|------------|----------|-----------|
-| Área Sociales - UNSA | UNSA | Calle San Agustin 107, Arequipa 04002 | -16.405969 | -71.520543 |
-| Área Biomédicas - UNSA | UNSA | Av. Virgen del Pilar s/n, Área de Biomédicas de la UNSA | -16.41248 | -71.534752 |
-| Área de Ingenierías - UNSA | UNSA | HFWF+29F, Arequipa 04001 | -16.404684 | -71.524577 |
+> Automatically generated by GitHub Copilot based on the project code and configuration.
