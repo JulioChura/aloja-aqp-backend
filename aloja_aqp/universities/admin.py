@@ -1,4 +1,14 @@
 from django.contrib import admin
+from .models import UniversityCampus
+from accommodations.tasks import recalculate_accommodations_for_campus
+
+class UniversityCampusAdmin(admin.ModelAdmin):
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        # Solo recalcula si se modificó latitud o longitud
+        if 'latitude' in form.changed_data or 'longitude' in form.changed_data:
+            recalculate_accommodations_for_campus(obj.id)
+from django.contrib import admin
 from .models import University, StudentUniversity, UniversityCampus
 from django.utils.html import format_html
 
@@ -34,3 +44,7 @@ class UniversityCampusAdmin(admin.ModelAdmin):
     list_display = ('id','name', 'university', 'address', 'latitude', 'longitude')
     search_fields = ('name', 'university__name', 'address')
     list_filter = ('university',)
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if 'latitude' in form.changed_data or 'longitude' in form.changed_data:
+            recalculate_accommodations_for_campus(obj.id)

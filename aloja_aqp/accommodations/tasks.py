@@ -1,24 +1,39 @@
-from celery import shared_task
-from .utils.routing import mapbox_route
-from .models import UniversityDistance, Accommodation, UniversityCampus
+def recalculate_accommodations_for_campus(campus_id):
+	"""
+	Recalcula distancia, tiempo y geometría de todos los alojamientos asociados a un campus/universidad.
+	Llama a la API de Mapbox y actualiza UniversityDistance.
+	"""
+	from universities.models import UniversityCampus
+	from .models import Accommodation, UniversityDistance
+	from .utils.routing import mapbox_route
+	import math
 
-def update_university_distance(accommodation_id, campus_id, lat, lon):
-    campus = UniversityCampus.objects.get(pk=campus_id)
-    route_data = mapbox_route(lat, lon, campus.latitude, campus.longitude)
-    if route_data:
-        UniversityDistance.objects.update_or_create(
-            accommodation_id=accommodation_id,
-            campus_id=campus_id,
-            defaults={
-                'distance_km': route_data['distance_km'],
-                'walk_time_minutes': None,  # Set if needed
-                'bus_time_minutes': None,   # Set if needed
-                'route': route_data['geometry'],
-            }
-        )
+	try:
+		campus = UniversityCampus.objects.get(id=campus_id)
+	except UniversityCampus.DoesNotExist:
+		return
 
-@shared_task
-def async_update_university_distances(accommodation_id, lat, lon):
-    campuses = UniversityCampus.objects.all()
-    for campus in campuses:
-        update_university_distance(accommodation_id, campus.id, lat, lon)
+	accommodations = Accommodation.objects.filter(latitude__isnull=False, longitude__isnull=False)
+	for acc in accommodations:
+		resultado_ruta = mapbox_route(
+			float(acc.latitude), float(acc.longitude),
+			float(campus.latitude), float(campus.longitude),
+			profile='walking'
+		)
+		if not resultado_ruta:
+			continue
+
+		distancia_km = resultado_ruta.get('distance_km')
+		duracion_minutos = resultado_ruta.get('duration_min')
+		minutos_a_pie = math.ceil(duracion_minutos) if duracion_minutos is not None else None
+		geometry = resultado_ruta.get('geometry')
+
+		UniversityDistance.objects.update_or_create(
+			accommodation=acc,
+			campus=campus,
+			defaults={
+				'distance_km': distancia_km,
+				'walk_time_minutes': minutos_a_pie,
+				'route': geometry,
+			}
+		)
